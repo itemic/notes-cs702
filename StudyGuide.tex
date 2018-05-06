@@ -1,0 +1,192 @@
+\documentclass[12pt,a4paper]{article}
+\usepackage{blindtext}
+\usepackage{graphicx}
+\usepackage[utf8]{inputenc}
+\usepackage[margin=0.65in]{geometry}
+\usepackage{multicol}
+\usepackage{wrapfig}
+\usepackage[dvipsnames]{xcolor}
+\usepackage{framed}
+\usepackage[most]{tcolorbox}
+\usepackage{pgfgantt}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta}
+\usepackage[dvipsnames]{xcolor}
+\definecolor{aliceblue}{rgb}{0.94, 0.97, 1.0}
+\colorlet{shadecolor}{aliceblue}
+\setlength\parindent{0pt}
+\usepackage{charter}
+\usepackage{environ}
+\usepackage{tikz}
+\usetikzlibrary{calc,matrix}
+\usetikzlibrary{positioning,fit,calc}
+\usepackage{float}
+\usepackage{url}
+% code by Andrew:
+% http://tex.stackexchange.com/a/28452/13304
+\makeatletter
+\let\matamp=&
+\catcode`\&=13
+\makeatletter
+\def&{\iftikz@is@matrix
+	\pgfmatrixnextcell
+	\else
+	\matamp
+	\fi}
+\makeatother
+
+\newcounter{lines}
+\def\endlr{\stepcounter{lines}\\}
+
+\title{COMPSCI 702 - Security for Smart-devices}
+\date{Semester 1, 2018}
+\begin{document}
+\maketitle
+\tableofcontents{}
+
+\section*{Disclaimer}
+\textit{This study guide is based off the lecture slides prepared for CS702. It is provided as-is and may contain errors, though effort has been made to minimize this. This resource is not exhaustive and may not contain additional content not covered by the slides.}
+\newpage
+
+\section{Access Control}
+\subsection{Security objectives}
+\begin{shaded}
+\begin{itemize}
+	\item \textbf{Confidentiality.} Protection of the data.
+	\item \textbf{Integrity.} Ensure data is not altered by unauthorized parties.
+	\item \textbf{Availability.} Ensure timely access to data.
+	\item \textbf{Authentication.} Identify whether communicating entity is who it claims to be.
+	\item \textbf{Authorization.} Regulate access to data.
+\end{itemize}
+\end{shaded}
+\subsection{Access control requirements}
+The inputs need to be \textit{reliable}, with authenticated entities or genuine information. The \textbf{principle of least privileges} grants the minimum set of access rights to do a job. Furthermore, only a special entity (administrator) can manage (grant/revoke/update) access rights.
+\subsection{Elements of access control}
+\begin{shaded}
+\begin{itemize}
+	\item \textbf{Subject.} An entity that can access objects. It can be a user or a process representing a user or an application.
+	\item \textbf{Object.} An entity (file, directory, resource) that needs to be protected.
+	\item \textbf{Access right.} An access right $r \in R$ describes how a subject $s \in S$ can access an object $o \in O$. Examples include: read, write, execute, create, delete, search, etc.
+	\item \textbf{Access control function $f(s, o, r)$} looks up the access right $r$ for combination $(s, o)$. It grants access on a successful match.
+	\item \textbf{Security administrator.} Entity that manages access rights.
+	\item \textbf{Auditor.} Entity that inspects whole authorization system.
+\end{itemize}	
+\end{shaded}
+\subsection{Access control models}
+There are 5 main models for access control:
+\begin{itemize}
+	\item Discretionary access control (DAC),
+	\item Mandatory access control (MAC),
+	\item Role-based access control (RBAC),
+	\item Usage control (UCON), and
+	\item Policy-based access control (PBAC).
+\end{itemize}
+\subsubsection{Discretionary access control}
+Users can protect what they own. The owner can grant access to subjects. Access is granted based on the identity of the requester. These mechanisms are adequate for honest users, but are vulnerable to Trojan horses.\\
+
+DAC is used in operating systems and DBMS. An example is Linux file permissions: \texttt{rwxr-x--x}.
+
+\subsubsection*{Access control matrix}
+\begin{shaded}
+\begin{center}
+\begin{tabular}{lllll}
+                            & File 1                                                                            & File 2                                                                            & File 3                                                                            & File 4                                                                          \\ \cline{2-5} 
+\multicolumn{1}{l|}{User A} & \multicolumn{1}{l|}{\begin{tabular}[c]{@{}l@{}}owner\\ read\\ write\end{tabular}} & \multicolumn{1}{l|}{}                                                             & \multicolumn{1}{l|}{\begin{tabular}[c]{@{}l@{}}owner\\ read\\ write\end{tabular}} & \multicolumn{1}{l|}{}                                                           \\ \cline{2-5} 
+\multicolumn{1}{l|}{User B} & \multicolumn{1}{l|}{read}                                                         & \multicolumn{1}{l|}{\begin{tabular}[c]{@{}l@{}}owner\\ read\\ write\end{tabular}} & \multicolumn{1}{l|}{write}                                                        & \multicolumn{1}{l|}{read}                                                       \\ \cline{2-5} 
+\multicolumn{1}{l|}{User C} & \multicolumn{1}{l|}{\begin{tabular}[c]{@{}l@{}}read\\ write\end{tabular}}         & \multicolumn{1}{l|}{read}                                                         & \multicolumn{1}{l|}{}                                                             & \multicolumn{1}{l|}{\begin{tabular}[c]{@{}l@{}}own\\ read\\ write\end{tabular}} \\ \cline{2-5} 
+\end{tabular}
+\end{center}
+An \textbf{access control list}	is a list of access rights on an object. A \textbf{capability list} refers to a user's permissions on different objects. In the diagram, columns are ACLs and rows are capability lists.
+\end{shaded}
+\subsubsection{Mandatory access control}
+MAC restricts access on the basis of security labels. Entities cannot enable other entities to access their resources. Users have security clearance, and resources have security labels that contain data classification.\\
+
+This model is used when information classification and confidentiality are very important, such as in the military. The \textbf{Bell-LaPadula model} (BLP) is used in the US Department of Defence. The \textbf{Biba model} is implemented in the FreeBSD MAC policy. A combined version is used in Android.
+
+\subsubsection*{Bell-LaPadula model}
+Goal: Control \textbf{confidentiality of information}.
+\begin{itemize}
+	\item \textbf{Simple security property.} No read up.
+	\item \textbf{*(Star)property.} No write down.
+	\item \textbf{Strong *(star)property} No write down and no write up.
+\end{itemize}
+
+\subsubsection*{Biba integrity model}
+Goal: Control \textbf{integrity of information}.
+\begin{itemize}
+	\item \textbf{Simple integrity axiom.} No read down.
+	\item \textbf{*(Star)-integrity axiom.} No write up.
+\end{itemize}
+\subsubsection{Role-based access control}
+RBAC maps roles to access rights. Supports complex access control. Reduces administrative errors. Flexible to move users or permissions in/out of roles. Least privilege; restrict access according to needs.
+
+\subsubsection*{RBAC model}
+\begin{shaded}
+\begin{itemize}
+	\item \textbf{User.} A human being. Usually. They are assigned roles (\textbf{user assignment, UA}).
+	\item \textbf{Permissions.} Approval of a mode of access to some object. They represent what operations could be performed on objects.
+	\item \textbf{Roles.} Job title. Roles are assigned permissions (\textbf{permission assignment, PA}).
+	\item \textbf{Assignments.} User-role and role-permission.
+	\item \textbf{Session.} Mapping between user and an activated subset of assigned roles.
+	\item \textbf{Constraints.} Constraintsd are present on sessions, assignments, and roles.
+\end{itemize}	
+\end{shaded}
+
+\begin{tikzpicture}[title/.style={font=\fontsize{8}{8}\color{black!50}\ttfamily}]
+\node (h) at (12, 1) [title] {Permissions};
+\node (a) at (0, 2) [rectangle, draw] {Users};
+\node (b) at (4, 2) [rectangle, draw] {Roles};
+\node (c) at (2, 0) [rectangle, draw] {Sessions};
+\node (d) at (10, 2) [rectangle, draw] {Operations};
+\node (e) at (14, 2) [rectangle, draw] {Objects};
+\node (f) at (8, 2) [rectangle, draw, fit={(h) (d) (e)}] {};
+\draw [<<->>] (a) -- (b) node [midway, fill=white] {UA};
+\draw [<<->>] (a) -- (c);
+\draw [<<->>] (b) -- (c);
+\draw [<<->>] (b) -- (f) node [midway, fill=white] {PA};
+\draw [<<->>] (d) -- (e);
+\end{tikzpicture}
+
+\subsubsection*{Controlling usage of resources}
+DAC, MAC, and RBAC are concerned with checking access rights of entities. Once the access is granted, no more control is enforced.
+
+\subsubsection{Usage control}
+UCON doesn't just regulate access to an object, but also focuses on controlling usage. Addresses DRM. DAC, MAC, and RBAC can be expressed by UCON.
+
+\subsubsection*{UCON model}
+\begin{shaded}
+\begin{itemize}
+	\item \textbf{Subjects.} Entities that perform actions.
+	\item \textbf{Objects.} Entities accessed by subjects.
+	\item \textbf{Rights.} Set of actions.
+	\item \textbf{Authorization.} Functional predicates that have to be evaluated for usage decision.
+	\item \textbf{Obligations.} Functional predicates that verify mandatory requirements that must have been performed by subject.
+	\item \textbf{Conditions.} Environmental/system based decision factors (time, status, etc.)
+\end{itemize}	
+\end{shaded}
+\subsubsection{Policy-based access control}
+In PBAC, an authorization policy governs access rights of subjects over objects. Policies are specified independently of entities. This provides a coherent view of access control in a system, and a separation between AC logic and enforcement mechanism.\\
+
+An approach is XACML.
+
+\subsubsection*{PBAC entities}
+\begin{itemize}
+	\item \textbf{Policy administrator.} Administrates access policies.
+	\item \textbf{Policy administration point (PAP).} Interface for policy administration.
+	\item \textbf{Policy store.} Repository to store policies.
+	\item \textbf{Subject.} Entity that makes access requests.
+	\item \textbf{Resources.} Target objects requested by subject.
+	\item \textbf{Policy enforcement point (PEP).} Enforces access policies and grants access to resources.
+	\item \textbf{Policy decision point (PDP).} Evaluates access policies.
+	\item \textbf{Policy information point (PIP).} Provides contextual information.
+\end{itemize}
+\section{Android Security}
+
+\section{iOS Security}
+
+\section{Seminars}
+
+
+
+
+\end{document}

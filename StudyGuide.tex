@@ -181,9 +181,83 @@ An approach is XACML.
 	\item \textbf{Policy information point (PIP).} Provides contextual information.
 \end{itemize}
 \section{Android Security}
+\subsection{Introduction to Android}
+Android is a smartphone (open-source) OS currently developed by Google based on the Linux kernel. The SDK was released in November 2007 for Java, followed by the NDK (native development kit) in June 2009 for C and C++. The \textbf{Open Handset Alliance} is a consortium of 84 firms for developing open standards for mobile devices.\\
 
+Android \textbf{fragmentation} is a problem. Vendors can customize the OS for their own devices by including their own apps. Some of these apps may compromise security/privacy as they have technical vulnerabilities. Vendors also might not push updates as frequently, and leave devices a few versions behind. Some vendors stop supporting their devices afterwards as well. \textit{The lack of support can lead to vulnerabilities.}\\
+
+Android is considered \textbf{middleware} between the Linux kernel and its set of APIs. Android apps are mainly written in Java, and only Android apps can run on Android devices. Through the APIs, apps can access device information/components.
+
+\includegraphics[width=\textwidth]{graphics/androidanatomy}
+
+\paragraph{Linux kernel}
+Android is built on the Linux kernel\footnote{It is \textbf{not} Linux.}. There is no \texttt{glibc} support, nor does it include the full set of Linux utilities. There are some kernel enhancements.\\
+
+The Linux kernel was chosen as it has great memory/process management. It also has a permissions-based security model, a proven driver model, support for shared libraries. The Linux kernel is also open-source.
+
+\paragraph{Binder}
+Applications and services may run in separate processes but must communicate and share data. \textbf{Issue:} Inter-process communication (IPC) can introduce significant processing overhead and security holes. \textbf{Solution:} Driver to facilitate IPC.
+
+\paragraph{Power management}
+Mobile devices run on battery power with limited capacity. The power management features are built on top of Linux power management, but has more aggressive power management policy.
+
+\subsubsection*{Native libraries}
+Bionic \texttt{libc} is a custom \texttt{libc} implementation.\\
+
+Why Bionic? \texttt{glibc} is licensed under LGPL, which prevents static linking of proprietary software. The size needs to be small as it will load in each process, and needs to be efficiency due to limited CPU power. \textbf{Bionic \texttt{libc}} is under the BSD license, is small, and efficient due to a custom pthread implementation. It does not support some POSIX features, is not compatible with \texttt{glibc}, and all native code must be compiled against Bionic.
+
+\subsubsection*{Hardware abstraction layer}
+This layer is a user-space C/C++ layer which separates the Android platform logic from the hardware interface.\\
+
+A user-space HAL is necessary as 1) not all components have standardized kernel driver interfaces; 2) kernel drivers are licensed under GPL, which exposes any proprietary IP; and 3) Android has specific requirements for hardware drivers.
+
+\subsubsection*{Android runtime}
+\paragraph{Dalvik VM}
+Android's custom clean room implementation. Provides application portability and runtime consistency. This runs Dalvik bytecode (optimized file format \texttt{.dex}). Java \texttt{.class}/\texttt{.jar} files are converted to \texttt{.dex} at build time.\\
+
+The VM is also designed for embedded environment. It supports multiple virtual machine processes per device. It has a highly CPU-optimized bytecode interpreter, and uses runtime memory very efficiently.
+
+\paragraph{Core libraries}
+These are Core APIs for Java which provide a powerful and simple/familiar development platform. They are basically Java wrappers around C/C++ based libraries.
+
+\subsubsection*{Application framework}
+These are services essential for Android. Apps don't access them directly.
+
+\subsubsection*{Applications}
+These are applications.
+
+\subsubsection{Runtime}
+At startup, the bootloader loads the Linux kernel and starts the \texttt{init} process. The \texttt{init} process starts the \textbf{zygote} process, a nascent process that initializes a Dalvik VM instance. It forks on request to create VM instances for managed processes. It uses copy-on-write to maximize re-use and minimize footprint. \textit{There is an instance of DalvikVM per APK.}\\
+
+\begin{tikzpicture}[title/.style={font=\fontsize{8}{8}\color{black!50}\ttfamily}]
+\node (a) at (0, 0) [rectangle, draw] {kernel};
+\node (b) at (0, 1) [rectangle, draw] {\texttt{init}};
+\node (c) at (0, 2) [rectangle, draw] {zygote};
+\node (d) at (4, 2) [rectangle, draw] {DalvikVM};
+
+\draw [->] (a) -- (b) node [midway] {};
+\draw [->] (b) -- (c) node [midway] {};
+\draw [->] (c) -- (d) node [midway] {};
+\end{tikzpicture}
+
+\includegraphics[width=\textwidth]{graphics/androidrt}
+
+\subsubsection*{Android security objectives}
+The goals are to protect user data, protect system resources (+network), and provide application isolation. 
+
+\begin{shaded}
+\textbf{Key Android security features:}
+\begin{itemize}
+	\item Robust security at OS level through Linux kernel
+	\item Mandatory app sandboxing for all applications
+	\item Secure IPC
+	\item Application signing
+	\item Application-defined and user-granted permissions
+\end{itemize}	
+\end{shaded}
+
+\subsection{Android application model}
 \section{iOS Security}
-
 \section{Seminars}
 
 

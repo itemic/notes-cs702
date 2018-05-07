@@ -257,6 +257,103 @@ The goals are to protect user data, protect system resources (+network), and pro
 \end{shaded}
 
 \subsection{Android application model}
+The Android application package (APK) consists of the following components:
+\begin{itemize}
+	\item \textbf{\texttt{classes.dex}.} Dalvik executable of Android app components
+	\item \textbf{Resources and assets.} Images, string values, raw data, layouts, etc.
+	\item \textbf{Native code.} C/C++ shared libraries linked dynamically
+	\item \textbf{META-INF.} Certificate and signature information
+	\item \textbf{Application manifest.} XML file that declares app metadata/components (names, intent filters, permissions). Its main elements are package info, app info (icon, etc.), activity component, etc.
+\end{itemize}
+
+Android requires that all apps be digitally signed with a certificate. Android apps used self-signed certificates. This certificate is used to identify the developer of an app. Android follows the \textbf{same-origin policy}. Android uses the same signing key-pair to ensure that updates come from the same developer.\\
+
+An Android app is a combination of loosely coupled components. Each component can offer multiple entry points.
+\begin{itemize}
+	\item Activity: user interface
+	\item Service: background services
+	\item Content provider: database
+	\item Broadcast receiver: mailbox for broadcasted messages
+\end{itemize}
+
+\subsubsection*{Intents}
+\textbf{Intents} are named events and represent the \textit{intent} to do something, such as launching an activity, starting service, or broadcasting a message. Its payload and attributes describe the intended action. It can be sent/received by an app.\\
+
+An \textbf{explicit} intent sets the target component name, such as \texttt{com.example.app.MainActivity}.\\
+
+An \textbf{implicit} intent provides information including action, data, and type. This is resolved at runtime by the package manager. The Android framework will find a suitable receiver for this intent. For example: \texttt{Action=intent.ACTION\_VIEW; Data=www.youtube.com} will open an app that can show YouTube, such as the YouTube app or the default web browser.
+
+\subsubsection*{Activity}
+\begin{wrapfigure}{r}{0.5\textwidth}
+\includegraphics[width=0.5\textwidth]{graphics/activity_lifecycle}
+\end{wrapfigure} 
+An \textbf{activity} is a main building block of GUI applications. It is like a website; multiple activities represent multiple ``pages'', and the main activity is like the homepage. It is possible to move from an activity to another, just like navigating through pages.\\
+
+There are system calls as state changes due to user actions. If there is another activity started, the on-going activity is paused. App process may be killed, and a stopped activity can be destroyed.\\
+
+The \textbf{Activity Manager} is responsible for creating, destroying, and managing activities. When a user starts an application for the first time, the AM will create its activity and put it onto the screen. When the user switches screens, the AM will move the previous activity to a holding place, so if the user wants to go back to an older activity it can be started more quickly.\\
+
+Older activities that haven't been used for a while will be destroyed to free space for current ones.
+
+\subsubsection*{Service}
+A \textbf{service} is a background process without a user interface, used to perform some long-running operation, such as downloading files or playing music. It can be local to the app or provided by other apps. Services can define a remote interface using the Android Interface Definition Language. The AIDL compiler creates skeleton for implementation of the service (stub). Services are started and stopped on demand.\\
+
+App components start unbounded services. A \textbf{bounded service} acts as a server. The app component (client) logs in (binds) to the server, consumes the services, and then unbinds.\\
+
+Use an \textbf{unbounded service} to do work if the app components don't need interaction with the service again. Use a \textbf{bounded service} if interaction is required.
+
+
+\subsubsection*{Content providers}
+\textbf{Content providers} are interfaces for sharing data between apps. The interfaces are simple: \texttt{select(), insert(), update(),} and \texttt{delete()}. They must be declared in the manifest with the \texttt{<provider>} tag.\\
+
+Content providers are accessed by the URI \texttt{content://<authority>/<resource>}.\\
+
+\paragraph{Contacts} Content provider that exposes user contact data to applications. The contacts app uses the contacts provider (a separate app) to retrieve contacts data. The contacts app does not have contacts data.
+
+\paragraph{Settings} Exposes system settings to applications, including to Settings.
+
+\paragraph{Media} Store responsible for storing/sharing media across applications.
+
+\subsubsection*{Broadcast receiver}
+A \textbf{broadcast receiver} is a component that responds to system-wide events. It's a mailbox for broadcast intent messages. Intent filters can be defined to indicate what messages to receive.\\
+
+Events can come from the system (SMS, low battery), or an application (data update complete).\\
+
+Broadcast receivers are Android's implementation of a system-wide publish/subscribe mechanism. The system or apps are publishers, and user apps are subscribers. A subscribing app can subscribe by indicating intent filters in the manifest or registering dynamically. The receiver will receive a triggered event if there is a subscription.\\
+
+Events are broadcasted to a number of receivers who subscribe for the event.\\
+
+A BR has to register with the Activity Manager and the Package Manager. This can be done through the manifest or programmatically\footnote{I highly doubt code details are examinable...}.
+\begin{shaded}
+\begin{lstlisting}
+<receiver android:name=``MsgListener''>
+   <intent-filter>
+      <action android:name=``compsci702.intent.action.BROADCAST''/>
+   </intent-filter>
+</receiver>
+\end{lstlisting}
+
+The \texttt{MsgListener} class is responsible for processing the intent. The \texttt{<action>} tag specifies the intents to be received.\\
+
+To do it programmatically, add an intent with \texttt{IntentFilter\#addAction()} and override \texttt{onReceive(Context c, Intent i)} for the action to be performed, then register the receiver and filter.
+
+\end{shaded}
+\begin{figure}[h]
+\centering
+\caption{Android build process}
+\includegraphics[width=0.5\textwidth]{graphics/build-apk}
+\end{figure}
+
+\subsection{Android ICC}
+
+
+
+
+
+
+
+
+
 \section{iOS Security}
 \section{Seminars}
 

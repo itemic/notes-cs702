@@ -345,14 +345,102 @@ To do it programmatically, add an intent with \texttt{IntentFilter\#addAction()}
 \end{figure}
 
 \subsection{Android ICC}
+\subsubsection*{Android Binder}
+Binder enables \textbf{inter-component communication} (ICC) in Android. It is implemented as a Linux kernel driver, as a customized version of Open Binder. It provides a simple RPC-like mechanism. Apps use Java methods to invoke ICC, then Android translates this into C++ invocations and system calls to the binder driver.\\
+
+In Linux, processes communicate and share data through pipes, shared memory, and message queues. In Android, app components communicate through binder.\\
 
 
+The \textbf{Activity Manager} is a service that apps use for ICC. It provides over 100 methods, including these common ones: \texttt{startActivity()}, \texttt{startBroadcast()}, \texttt{startService()}, and \texttt{bindService()}. Apps export services by publishing them through the Activity Manager.\\
 
+The \textbf{Service Manager} is a special system service to keep track of available services. An app that wants to provide a service to others can publish its service through the Service Manager. Communication to the Service manager takes place through the Binder.\\
 
+The Service Manager accepts these commands:
+\begin{itemize}
+	\item \textbf{Publish.} Used to publish a service within the Service Manager. Takes arguments: service name and address.
+	\item \textbf{Get/check.} Returns an address of the service in form of handler. Takes argument: service name.
+	\item \textbf{List.} Lists the service names registered with the Service Manager.
+\end{itemize}
 
+The Android middleware contains a \textbf{reference monitor} that mediates the establishment of ICC. This is part of the Activity Manager.
 
+\subsubsection*{MAC security enforcement}
+A reference monitor enforces MAC for regulating access to app components. Access to each component is restricted by assigning it an access permission label. Applications are assigned collections of permission labels. When a component initiates ICC, the reference monitor checks if its permission label is same as the target component's access permission label.\\
 
+The Android middleware implements a reference monitor providing MAC enforcement about how apps access components.
 
+\begin{figure}[h!]
+\centering
+\caption{A's ability to access B and C is determined by comparing the access permission labels on B and C with the collection of labels assigned to App 1.}
+\includegraphics[width=0.9\textwidth]{graphics/plabels}
+\end{figure}
+
+Assigning permission labels to an app specifies its protection domain. Android's policy enforcement is mandatory: permission labels can't be changed until the app is reinstalled. This model restricts access to components and doesn't provide information flow guarantees.
+
+\subsection{Sandboxing}
+\textbf{Sandboxing} specifies which system resources an application is allowed to access. This limits malicious apps to perform actions only in the sandboxed environment. \\
+
+There are two levels of sandboxing:
+\begin{itemize}
+	\item \textbf{Process level.} Each application is run in a dedicated process and access to sensitive resources depends on permissions. \begin{itemize} 
+	\item Android assigns a unique User ID (UID) to each Android app.
+	\item A UID (AppID) is generated at install time.
+	\item It runs each app as a separate process with its UID.
+	\item Apps run within the sandboxing environment in the kernel.
+	\end{itemize}
+	\item \textbf{Filesystem level.} Each application has its own private data directory and only the application can access its own data directory. \begin{itemize} 
+	\item Each app is assigned a dedicated data directory.
+	\item This applies to all apps (even native apps).
+	\item Only the app has permission to read/write to its data directory.
+	\end{itemize}
+\end{itemize}
+
+The app data directory is implemented based on Linux DAC. Permissions are set by the system \texttt{rwxrwxrwx}. Only the owner/root can change permissions.\\
+
+System daemons and apps run under well-defined/constant UIDs. The root has UID 0. System UIDs are statically defined in the \texttt{android\_filesystem\_config.h} header file.\\
+
+UIDs for system services start from 1000:
+\begin{itemize}
+	\item \texttt{android.uid.phone} (PHONE\_UID, 1001)
+	\item \texttt{android.uid.bluetooth} (BLUETOOTH\_UID, 1002)
+	\item \texttt{android.uid.log} (LOG\_UID, 1007)
+	\item \texttt{android.uid.nfc} (NFC\_UID, 1027)
+\end{itemize}
+
+Apps can be installed using the same UID. Apps can share files and run in the same process. Shared UIDs are used by system apps which use the same set of resources. (Example: in Android 4.4, the system UI and keyguard share the same UID).\\
+
+Shared UIDs aren't recommended for non-system apps, but is still available as long as the apps are signed with the same signing key.
+
+\subsection{Permissions}
+Apps are sandboxed, so they can only access their own files. Android can grant additional access rights (permissions) to apps. This helps Android control access to resources.\\
+
+Apps request permissions defined in \texttt{AndroidManifest.xml}. Apps can request a set of additional permissions granted at runtime. A user may be asked to grant requested permissions. Android comes with a built-in list of pre-defined permissions. When new features come out, associated permissions are added as well. \textbf{Custom permissions} can be defined by system and user-installed apps.\\
+
+An app that wants to receive incoming SMS (\texttt{RECEIVE\_SMS}) has to declare:
+
+\begin{lstlisting}
+<uses-permission android:name="android.permission.RECEIVE_SMS"/>
+\end{lstlisting}
+
+\subsubsection*{Permission management}
+Permissions are assigned to each app by the package manager, which maintains a central database of installed packages with info about install path, version, certificate info, assigned permissions to each package, and a list of all permissions defined on a device. This database is in \texttt{/data/system/package.xml} and is updated every time an app is installed, updated, or uninstalled.
+
+\subsubsection*{Permission protection levels}
+The levels characterize potential risk in the permission and indicate the procedure that the system should follow when determining whether to grant the permission.
+
+\begin{itemize}
+	\item \textbf{Normal.} This is not security critical and is granted without asking users. \begin{itemize} \item\texttt{ACCESS\_NETWORK\_STATE} allows apps to access network information.\end{itemize}
+	\item \textbf{Dangerous.} Grants access to user data or some control over the device. Involves functionalities that can cost money, so requires user approval. \begin{itemize}
+	\item \texttt{READ\_SMS} allows apps to read SMS.
+	\item \texttt{CAMERA} gives apps access to camera.
+	 \end{itemize}
+	 \item \textbf{Signature.} Only granted to requested apps that are signed with the same key as the app that declared the permission. Strongest permission level as it requires cryptographic key possession. Apps using these permissions are controlled by the same developer. Decided by system without requiring user intervention. Typically used by system apps that do device management.
+	\begin{itemize}	 \item \texttt{NET\_ADMIN} allows configuration of network interfaces, IPSec, etc.
+	\end{itemize}
+	\item \textbf{SignatureOrSystem.} Granted to apps part of the system image or signed with the same key as the app that declared permission. Allows vendors to have pre-installed apps to share specific features that require a permission without having to share signing keys. Until Android 4.3, any app installed in the system partition was granted this permission. Since Android 4.4, apps need to be installed in \texttt{system/priv-app} to get this.
+\end{itemize}
+
+\textit{TODO: The diagrams on these slides...}
 
 \section{iOS Security}
 \section{Seminars}

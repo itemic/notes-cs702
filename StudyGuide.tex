@@ -442,6 +442,141 @@ The levels characterize potential risk in the permission and indicate the proced
 
 \textit{TODO: The diagrams on these slides...}
 
+\subsection{Security refinements}
+Android's security framework is based on MAC and DAC. It offers additional refinements as well which are exceptions.
+
+\subsubsection*{Public and private components}
+Private components simplify security specification as devs don't have to worry about permission labels. By default, components are public (but declare them as private for best practice).\\
+
+Apps may contain components that others should never access, such as a password. Developers can declare this component private (in manifest file, set exported attribute to false). Private components can only be accessed by other components in the same app.\\
+
+\subsubsection*{Implicitly open components}
+Developers frequently define intent filters on activities. For example, the system may find an image viewer when an intent has a \texttt{VIEW} action. The caller won't know beforehand what access permission is required. The developer of the target activity can declare it open by not assigning access permission to it (public without permissions).\\
+
+This default policy specification enables functionality and ease of development. However, any app can have access and can lead to poor security practices.\\
+
+Best practices:
+\begin{itemize}
+	\item Components must be declared open in exceptional cases.
+	\item Consider splitting components to sub-components to specific fine-grained control.
+\end{itemize}
+
+\subsubsection*{Broadcast intent permissions}
+A broadcast intent is read by all apps so can lead to the leaking of sensitive information. With a broadcast intent permission, the developer can protect the intent. This is declared programmatically with \texttt{sendBroadcast(intent, PERMISSION)}.
+
+\subsubsection*{Content provider permissions}
+Always define both read and write permissions for content providers, which provide interfaces for reading and writing.
+
+\subsubsection*{Service hooks}
+If a component has the permission, it can start, stop, or bind the service at any time. To specify more flexible and fine-grained access control, Android lets components invoke the \texttt{checkPermission()} method. This is done at the code level.
+
+\subsubsection*{Pending intents}
+Pending intents delegate actions to another application. This allows other apps to invoke services on behalf of the requesting app. This allows better integration with third party apps, but since it enables delegation, it deviates from MAC.
+
+\subsubsection*{URI permissions}
+Android uses a special content URI to deal with content providers, and can specify a record within a table. An app that doesn't have a read permission to access the content provider can get access with a URI permission. The developer can pass a URI in an intent filter. This also deviates from MAC.
+
+\subsection{Security weaknesses}
+Poorly designed apps can result in resources being exposed or depleted, as well as the loss of privacy.
+
+\subsubsection*{Privilege escalation}
+An adversary tries to escalate privileges to gain unauthorized access to protected resource.\\
+
+\paragraph{Confused deputy attack} If an app doesn't have a permission, it can ask its neighbor. This leverages the vulnerability in a benign app.
+\paragraph{Collusion attack} Multiple apps can collaborate to get permissions which each of them cannot get otherwise. For example, if an app has access to location, and another has access to the internet, they can collude to expose user information on the internet.\\
+
+Android supports all-or-nothing access and doesn't offer fine-grained access control. If an app has access to the internet and contacts, the app can use contacts and use the internet. It is not okay for the app to publish contacts through the internet. \textit{Information flow techniques needed to prevent information disclosure.}
+
+\subsection{Runtime permissions in Android 6}
+Android 6.0 Marshmallow was released in October 2015 (API level 23). In this version and onwards, users grant permissions at runtime rather than at install-time. This streamlined the app installation process and also gives user more control over the app's functionality. A user can give a camera app access to the camera but not the location.\\
+
+Users can revoke permissions at any time in the Settings app.\\
+
+From a user's perspective, permissions can be categorized in to normal or dangerous. Normal permissions are automatically granted as they don't risk privacy. Dangerous permissions have to be approved as they can give the app access to confidential data.\\
+
+Prior to Android 6, users had to grant dangerous permissions when they install the app as the app won't be installed if the user doesn't grant permissions. Now, the app lists all the permissions in its manifest, and must request each dangerous permission it needs while the app is running. Users can grant/deny each permission; the app will still run (with limited capabilities).\\
+
+Permissions must be checked each time an operation that requires the permission is called by calling the \texttt{checkSelfPermission()} method. This returns \texttt{PackageManager.PERMISSION\_GRANTED} if the app has the permission, or \texttt{PackageManager.PERMISSION\_DENIED} if it doesn't, at which point the app has to ask the user for permission.\\
+
+With Android, explanations for permissions can be added so that the user can know why a certain permission is required.\\
+
+When an app requests permissions, the system presents a dialog box to the user; the app cannot change the dialog box. When the user responds, the system invokes \texttt{onRequestPermissionsResult()}. The app must override that method to determine if the permission was granted.\\
+
+There are two ways for an app to perform a task: by asking the permission, or use an intent to get another app to perform the task. With permissions, the app has full control over the UX, but this adds complexity to the task. With the use of intents, the app that handles the intent provides the UI and thus the app has no control over the UX.
+
+\subsection{App distribution}
+The Google Play Store is Google's app distribution platform and official Android app store. To distribute apps, developers have to pay a registration fee for a Google Play Developer Console account. Developers receive 70\% of the app's price. Only Android devices that comply with Google's compatibility requirements may install and access apps.\\
+
+\textbf{Malware} is software that can disrupt normal activities, such as compromising privacy, reliability, confidentiality, etc. 99\% of mobile malware is on Android.\\
+
+\paragraph{Spyware} Collect sensitive information and upload to remote servers. Example: FakeNetflix collects Netflix credentials.
+\paragraph{Destructive trojans} Modify content on devices. Example: Android.Elite.1.origin is a fake Angry Birds game.
+\paragraph{Financial charges} SMS trojan for sending SMS to premium numbers. Example: FakePlayer sends a hard-coded message to premium numbers in Russia.
+\paragraph{Ransomware} Steal data or disables phone functionality and asks for money to unlock this data.
+\paragraph{Mobile botnets} Receive commands from remote command and control servers.
+\paragraph{Root-kit exploits} Lots of stuff.
+
+\subsubsection*{Google Bouncer}
+Google Bouncer is an in-house anti-malware system by Google as a first line of defense against Android malware. It emulates Android apps on Google's cloud and looks for anomalies that may be indicative of malware. Full coverage but less reliable.
+
+\paragraph{Static analysis} Analysis that does not require code execution. A static analysis tool inspects programs for possible runtime behaviors to find potentially malicious code.
+\paragraph{Dynamic analysis} Requires code execution to determine program flow. Reliable but lacks coverage.
+
+In 2015, a Google announcement announced that the app review process will involve a team of experts.
+
+\subsection{Google Bouncer}
+Google Bouncer was easily bypassed. This section discusses how that happened.\\
+
+It was discovered that it was possible to submit apps without paying. Submit a sample app that connects to a command and control server, but do no harm. Bouncer ran the app before it was published.\\
+
+Bouncer did runtime analysis of app in an emulated Android environment for 5 minutes on Google's infrastructure. It allowed external network access.\\
+
+It was possible to fingerprint the QEMU version and get information. The Android ID returned was indicative of an emulator, but recent tests indicate that the ID is now dynamic. The account owner was associated with \texttt{miles.karlson@gmail.com}.\\
+
+In short, Bouncer runs your app for 5 minutes so if you don't do anything bad for 5 minutes it's fine. Bouncer is not a physical device. It explores the app by emulating input and clicking. If your app is flagged, then a human analyzes the app.
+
+\subsection{App installation and scanning}
+\textbf{App repackaging} is a major attack vector. Attackers can't forge signatures but can remove the original signature and re-sign the repackaged app with a new certificate. This new app encloses a malicious payload. Android prevents malicious updates but breaks trust on the first time install.\\
+
+Android apps can be installed from the Play Store or via \textbf{sideloading}, or installing apps from other sources. The latter requires enabling installation from \textit{unknown sources} in security settings.\\
+
+Sideloading can take place through USB (e.g. \texttt{adb install app.apk}), Bluetooth, Wi-Fi, third party app stores, or downloads.\\
+
+Google Play offers security services:
+\paragraph{Protection within Google Play Store} Play Store has policies in place to protect users from attackers. Developers are reviewed when they create their developer account based on profile and credit cards. They are also reviewed upon app submissions. Google Play also scans apps for malware and other vulnerabilities, and suspends accounts that violate policies.
+\paragraph{App review} Ratings and reviews provide information about an app. Apps that mislead users may have low reviews. (What about paid reviews and all that?)
+\paragraph{Remote app removal} Google can remove malicious apps the store. If an installed app poses a threat, Google can remotely remove it.
+\paragraph{Google Play Protect} This is an additional service that provides protection from apps outside of Google Play. This scans apps when you install them and scans for potentially harmful apps. By default, app verification is enabled but can be disabled. (Can it identify obfuscated harmful apps?)
+
+\subsection{Android for Work}
+\textbf{TrustZone} supports a full Trusted Executed Environment (TEE) and runs in a special CPU mode called Secure Mode. Memory for secure mode and security functions are hidden from the ``normal world." Android vendors can supply security features such as secure boot or DRM with this.\\
+
+Cryptography is used throughout Android to ensure confidentiality and integrity. Applications of it include: device encryption, app signing, and network connectivity/encryption.
+
+\subsubsection*{Device encryption}
+Process of encoding user data on an Android device with an encryption key. If device encryption enabled, all user-created data automatically encrypted before storing on disk. All reads automatically decrypt data before returning to calling process. Android disk encryption based on \texttt{dm-crypt}. Android uses AAES for device encryption\\
+
+Application security include: sandboxing, permissions, SELinux, app signing, Google Play reviews and Play Protect.\\
+
+\subsubsection*{Network security}
+Android provides secure communications over the Internet by supporting TLS/SSL. Their security team developed a tool called \texttt{nogotofail} which confirms if devices/apps are safe against known vulnerabilities/misconfigurations.\\
+
+\subsubsection*{BYOD}
+Android 5 and onwards support enterprise use cases.\\
+
+BYOD refers to the policy of allowing employees to bring their own devices to the workplace. They are used to gain privileged corporate information/apps.\\
+
+A primary user is the first user added to a device. They can't be removed unless it's by a factory reset. This user also has special privileges and is always running. Secondary users can be added and removed by the primary user.\\
+
+A \textbf{work profile} is a separate Android user managed by the enterprise. The \textbf{profile owner} can manage the corporate space on a user's personal device. The \textbf{device owner} is like a profile owner but to the device; it is the device admin in the corporate use case.
+
+\subsubsection*{Application management}
+\textbf{Google Play for Work} offers APIs used by enterprise mobility management (EMM) vendors to allow them to manage apps. IT admins can remotely install/remove apps on a managed Android for Work device. They can define which users can see which apps, and can see which users have which apps installed.\\
+
+Apps can be published by an enterprise customer and targeted privately. There are two modes of delivery: Google-hosted or externally-hosted. Apps must comply with Google Play policies.\\
+
+An app can allow IT admins to remotely control the availability of features or configure settings.
+
 \section{iOS Security}
 \section{Seminars}
 

@@ -1748,11 +1748,79 @@ Google is also limiting use of Accessibility Services for non-accessibility purp
 
 Restricting overlays can be detrimental to user experience (chat heads!).
 
-\subsection{[Huang CCS17]}
+\subsection{The ART of App Compartmentalization: Compiler-based Library Privilege Separation on Stock Android}
+\subsubsection*{[Huang CCS17]}
+Developers use software libraries, such as platform libraries but also third-party libraries. Third-party libraries are used to either solve a problem (such as a physics engine), or for monetization (ad library/service).\\
 
-\subsection{[Li CCS17]}
+Libraries run with the \textbf{same privileges} and in the \textbf{same sandbox} as the application. This could lead to data leakage and greater exposure to vulnerabilities. A library exploit could lead to an exploit in the app.\\
 
-\subsection{[Luo CCS17]}
+\begin{figure}[h!]
+\centering
+\caption{System overview of CompARTist}
+\includegraphics[width=0.9\textwidth]{graphics/compartment}
+\end{figure}
+
+The solution is to move the library into its own sandbox and to interconnect it with the host application with the Binder.\\
+
+\subsubsection*{IPC}
+Libraries rarely implement \texttt{Parcelable}, so transferring the original classes isn't an option. Authors implement \texttt{WrapClass} that is used by \texttt{AdHelper} to replicate access to objects to the other end.
+\begin{figure}[h!]
+\centering
+\caption{Inter-application communication channel}
+\includegraphics[width=0.7\textwidth]{graphics/IACC}
+\end{figure}
+
+The idea is to rewrite the app code during compilations to use \texttt{AdHelper} and IPC. First, entry points must be identified, then rewrite the code by traversing entry points down the call graph. Finally, the \texttt{AdHelper} library is injected.\\
+
+In short, the app is split into a host and the ad app. IPC is used as communication between the two apps. Instrumentation replaces calls to the third-party library with calls to \texttt{AdHelper} that calls the ad app. Layout synchronization replicates GUI state.\\
+
+Start-up is slow because IPC has to be initialized.
+
+\subsubsection*{Criticisms}
+This approach works for loosely coupled libraries, but would have high performance overhead for tightly coupled libraries.\\
+
+This requires root privileges to replace the \texttt{OAT} files in the original app.\\
+
+Advertisement companies might not care?
+
+
+
+\subsection{Unleashing the Walking Dead: Understanding Cross-App Remote Infections on Mobile WebViews}
+\subsubsection*{[Li CCS17]}
+A \textbf{WebView} is an in-app browser that runs in the current app to load some content. This is convenient for users. When a URL in an app is triggered, it sends an intent to another app which redirects its WebView to load the URL content.\\
+
+An \textbf{intent} is an abstract description of an operation to be performed.\\
+
+Cross-app webview navigation (XAWN) can be intent-based through an \textbf{implicit scheme} (locates targeted apps through intent) or an \textbf{explicit scheme} (targeted towards a specific app). \textbf{Deep linking} links to a specific location within an app.\\
+
+\subsubsection*{The Problem}
+Navigations aren't guarded extensively by the mobile OS. They are protected solely on intent permissions and filters.\\
+
+Security for WebViews are difficult to implement. Android provides domain controlling methods such as \texttt{shouldOverrideUrlLoading()} and \texttt{onPageStarted()} but they can be circumvented\\
+
+XAWN weakness exploited through transition of apps.
+
+\subsubsection*{Cross-App WebView infection}
+This attack attempts to gain control, privileges, and user information of the hosting application. The attack infects the entry point app and then spreads from the remote adversary.
+
+\paragraph{Phishing} Attempt to obtain sensitive information by disguising as a trustworthy entity in electronic communication.
+
+\paragraph{Remote Deep Phishing} Facebook has a URL bar to show source of web content, so phishing can't take place. Twitter doesn't, so by infecting the Twitter UI, the app can display a fake login UI to impersonate Facebook.\\
+
+When the user opens Facebook, the app isn't displayed but the infected WebView instantly invokes Twitter's WebView with a phishing login page. Once the user ``logs in,'' Facebook's main activity is displayed.
+
+\paragraph{Remove Privilege Escalation} Install malware and sends messages without user consent after clicking a link.
+
+\subsubsection*{Solution}
+\textbf{ViewFinder} is a simple fuzzing system that scans apps for remotely-controllable WebView instances. Its code and manifest files are checked to find malicious intents. Out of 5000 apps, 7.4\% of them that receive intents from other apps were found to have vulnerable WebViews.\\
+
+\textbf{NaviGuard} identifies and controls anomalous cross-WebView navigation requests. It prevents navigation without user permission and notifies users about the automated navigation.
+
+\subsubsection*{Criticisms}
+Apps were challenging to use. NaviGuard was only tested on a specific model.
+
+\subsection{Hindsight: Understanding the Evolution of UI Vulnerabilities in Mobile Browsers}
+\subsubsection*{[Luo CCS17]}
 
 \subsection{[Nguyen CCS17]}
 

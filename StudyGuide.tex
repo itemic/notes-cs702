@@ -1642,4 +1642,73 @@ The probabilities of \textit{results with or without an individual} are almost t
 
 \newpage
 \section{Seminars}
+\subsection{Stack Overflow Considered Harmful? The Impact of Copy \& Paste on Android Application Security}
+\textbf{[Fischer SP17]}
+
+\subsection{Cloak and Dagger: From Two Permissions to Complete Control of the UI Feedback Loop}
+\textbf{[Fratantonio SP17]}\\
+
+The main point is to do malicious things to the user's phone without them being aware of it. Examples are: stealing logins, installing apps, clicking on ads, calling foreign numbers. This is done by \textbf{controlling the UI feedback loop} and manipulating what the user sees.
+
+\begin{shaded}
+\textbf{Dangerous permissions}\\
+
+This vulnerability uses two Android permissions:
+\begin{itemize}
+	\item \texttt{SYSTEM\_ALERT\_WINDOW} is a permission that needs to be manually enabled but is automatically granted if downloaded from the Google Play Store. It is used to allow drawing over other apps' windows.
+	\item \texttt{BIND\_ACCESSIBILITY\_SERVICE} is intended for accessibility-related apps. It can listen for click events and notifications in other apps, scroll and click for the user, and gives access to the full view tree. This isn't automatically granted but does not show up when installing. 
+\end{itemize}
+
+Both permissions are required for the attack. With only the first one, the attacker can modify what the user sees but can't react to their actions. With only the second one, the attacker can inject fake input but the user will know that they're being attacked.
+\end{shaded}
+
+\subsubsection*{Existing preventative measures}
+If an overlay (from \texttt{SYSTEM\_ALERT\_WINDOW}) is being used as a \textbf{pass-through}, the app can't detect touches in its overlay. It is not possible then to overlay a transparent view and steal touches. However, it is possible to detect touches outside the overlay without coordinates (outside clicks set to (0,0)).\\
+
+The \texttt{BIND\_ACCESSIBILITY\_SERVICE} permission needs to be explicitly enabled by the user and doesn't give access to passwords in the view tree.\\
+
+\textbf{Clickjacking.} Apps can detect if a view is being overlaid, so instead we can overlay everything else and change the look of the overlay!\\ 
+
+We can play a video in an overlay, and in the background install a malicious app and grant it permissions.\\
+
+\subsubsection*{Keystroke inference}
+We can read keystrokes with \texttt{SYSTEM\_ALERT\_WINDOW} by creating a passthrough overlay per key and stack them on each other. Each overlay has a flag to detect if it's being obscured, and to detect if an outside touch occurred. The lowest overlay that isn't obscured is the desired key. Overlays could also be used for fake login fields or ads.
+
+\subsubsection*{User study}
+20 university staff were asked to participate and install an app. None of them realized that they were being attacked; in the background an app was being installed.
+
+\subsubsection*{Proposed fixes}
+\begin{itemize}
+	\item Allow apps to be marked \textbf{security-sensitive} so that they can't be drawn over. Don't let accessibility services click/enter text. (This would break apps like LastPass).
+	\item Don't automatically grant \texttt{SYSTEM\_ALERT\_WINDOW}.
+	\item Check apps that use both permissions.
+	\item Display permissions at install-time.
+\end{itemize}
+From Android 8.0 onwards, apps can't draw over system views such as the notification bar. Notifications are also shown if an app is drawing an overlay.\\
+
+Google is also limiting use of Accessibility Services for non-accessibility purposes.\\
+
+Restricting overlays can be detrimental to user experience (chat heads!).
+
+\subsection{[Huang CCS17]}
+
+\subsection{[Li CCS17]}
+
+\subsection{[Luo CCS17]}
+
+\subsection{[Nguyen CCS17]}
+
+\subsection{[Papadopoulos WWW17]}
+
+\subsection{[Ren NDSS17]}
+
+\subsection{[Song SP17]}
+
+\subsection{[Xue USENIX-Security17]}
+
+\subsection{[Ye NDSS17]}
+
+\subsection{[Zhang INFOCOM17]}
+
+\subsection{[Zuo WWW17]}
 \end{document}

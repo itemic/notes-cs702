@@ -1821,20 +1821,178 @@ Apps were challenging to use. NaviGuard was only tested on a specific model.
 
 \subsection{Hindsight: Understanding the Evolution of UI Vulnerabilities in Mobile Browsers}
 \subsubsection*{[Luo CCS17]}
+Are mobile web browsers becoming more secure when compared with older versions?\\
 
-\subsection{[Nguyen CCS17]}
+\textbf{Attack building blocks (ABB)} are different types of UI attacks. 
+\begin{itemize}
+	\item \textbf{Event routing.} Overlapping elements belonging to different origins used to reroute the user. Clickjacking is an example.
+	\item \textbf{Limited screen real-estate.} Hiding address bars or rendering them differently. This can be dangerous as the address bar is needed to identify the website.
+	\item \textbf{Security indicators and content.} There should be indicators shown when a site has content other than HTTPS or when its certificate is signed by trustworthy authorities.
+\end{itemize}
 
-\subsection{[Papadopoulos WWW17]}
+The test was done testing each ABB using Hindsight, as manual testing would be time consuming. Web browsers were found from Google Play, and older versions were found through third-party sites. Some browsers that didn't work were removed, and others that didn't work with Hindsight due to there being a splash screen were also filtered out.\\
 
-\subsection{[Ren NDSS17]}
+Hindsight is an agnostic testing vulnerability framework. It can accommodate for all browsers, but due to differing layouts in some, it would not be possible to determine where the address bar is for some browsers. It used OCR to identify some elements.\\
 
-\subsection{[Song SP17]}
+98.6\% of browsers tested were vulnerable to at least one ABB attack. Half of the APKs were vulnerable to more than 12 (out of 27) ABBs. Browsers are becoming less and less secure. Popular browsers are more vulnerable than less-known browsers.
 
-\subsection{[Xue USENIX-Security17]}
+\subsection{A Stitch in Time: Supporting Android Developers in Writing Secure Code}
+\subsubsection*{[Nguyen CCS17]}
+There are many apps on the Play Store and developers fail to adhere to security best practices. This could be because of their inexperience/lack of security knowledge, their adoption of insecure practices, or just due to them using copy/paste.\\
 
-\subsection{[Ye NDSS17]}
+Existing security tools require certain levels of security expertise to use. Android Lint doesn't, but doesn't emphasize security warnings and have limited data flow analysis functionality.\\
 
-\subsection{[Zhang INFOCOM17]}
+\textbf{FixDroid} is a static analysis tool based on Lint. It highlights code with additional explanations. It has a security indicator icon as well as suggests quick-fix options. It matches pasted snippets against an online database of known insecure snippets.\\
 
-\subsection{[Zuo WWW17]}
+Students were given tasks. There was no significant difference in functional correctness but a difference in security success.
+
+\subsubsection*{Criticisms}
+\begin{itemize}
+	\item Can it handle non-trivial tasks?
+	\item Can it impact security?
+	\item Only covers specific pitfalls.
+	\item Not representative of all developers
+\end{itemize}
+\subsection{The Long-Standing Privacy Debate: Mobile Websites vs. Mobile Apps}
+\subsubsection*{[Papadopoulos WWW17]}
+Most online services offer both a mobile-friendly website and an app. Both are offered for free with revenue coming from ads. Ads may raise privacy concerns for users.\\
+
+Websites track users through cookies. Cookie synchronization can be used to bypass the same-origin policy when collecting data. Ad libraries are embedded in applications, and also inherit the original app's permissions.\\
+
+Data that could be leaked include personally identifiable information (PII) and device-specific identifiers (location, list of apps installed, etc.; this allows tracking without deletable cookies).\\
+
+Selenium was used to automate collection of apps to form a dataset. The apps chosen were from the top 300 services ranked by Alexa. The dataset consisted of 116 sites and their apps from Alexa's top 300. LibRadar was used to detect embedded ad libraries.\\
+
+Testing was done with a Raspberry Pi 2 to monitor outgoing resources. SSL sessions were monitored and traces are forwarded to a module for analysis.\\
+
+56.67\% of apps contained a third-party ad library.\\
+
+Location data leaked by 66\% of apps and 85\% of websites. Unique device IDs were leaked by many apps, allowing leaked data to be linked between apps. List of installed apps leaked by 3.45\% of apps, allowing profiling of user.\\
+
+Chrome and Firefox don't leak unexpected identifiers, but sent a request to tracking domains while fetching google.com.\\
+
+Apps are more prone to leak device ID information. \textbf{antiTrackDroid} is a tool that filters outgoing requests and blocks ones delivering tracking information, but requires the Xposed framework.
+\subsection{WindowGuard: Systemic Protection of GUI Security in Android}
+\subsubsection*{[Ren NDSS17]}
+The Android GUI is comprised of many services, including \textbf{Activity Manager Service} and \textbf{Windows Manager Service}. An \textbf{activity} is a type of app component that provides at least one window. The AMS contains instance of each activity.\\
+
+A \textbf{window} is a visual area on screen that shows the GUI. The WMS contains instance of each window (size, location, z-order, etc.). There are three types: app (associated with activity), system (special purpose), and sub-window.
+
+\subsubsection*{Background}
+How app's activity manages to display its window on screen:
+\begin{enumerate}
+	\item AMS launches a new app activity.
+	\item Activity creates a window and registers itself to WMS.
+	\item WMS asks SurfaceFlinger for drawing surface. Handler passed to app.
+	\item App draws window's view hierarchy. SurfaceFlinger notified once complete.
+	\item SurfaceFlinger displays the final frame.
+\end{enumerate}
+
+Current security mechanisms:
+\begin{itemize}
+	\item \textbf{App sandboxing.} Isolates an app's graphic information.
+	\item \textbf{Binder token.} Client authentication. System services to securely identify clients to prevent spoofing.
+	\item \textbf{Permission screen.} Access control that grants app permissions.
+\end{itemize}
+
+\subsubsection*{Problem}
+User session is unprotected -- this is a list of GUIs the user has visited. Mobile screens are small so it's hard to verify app identity. Apps are allowed to launch new activities, add high z-order windows, or modify other apps' back stacks.
+
+\paragraph{Android Window Integrity} No app has permission to perform any operations that adversely affect the user session. The display owner is the app of the current focused display and is more privileged than other apps.\\
+
+Validation of states and their legitimacy. Legitimacy of activity session: mismatch between back stack and activity session. Legitimacy of current visible windows: stop windows overlaying display owner windows except white-listed or those belonging to the display owner. Legitimacy of future windows: same check as before, and also watching for misuse of \texttt{onBackPressed()}.\\
+
+\textbf{WindowGuard} is an implementation of AWI model, as an Xposed framework module. If a violation is detected, a notification is used to inform the user.\\
+
+Successfully detects 12 GUI attacks with little performance overhead. There are some false positives and negatives. Requires rooted device.
+
+\subsection{Multi-touch Authentication Using Hand Geometry and Behavioral Information}
+\subsubsection*{[Song SP17]}
+People use biometric authentication to replace traditional methods of authentication. Simple physiological biometric methods (fingerprints) are vulnerable, but behavioral biometric methods are uncontrollable.\\
+
+TFST (touch with fingers straight and together) gestures make use of multiple fingers. This technique is resilient to different attacks:
+\paragraph{Zero-effort attack} Attacker tries to authenticate by change without any knowledge.
+\paragraph{Smudge attack} Attacker uses oily traces left on screen as a hint.
+\paragraph{Shoulder surfing attack and combination} Attacker watches authentication process of the user
+\paragraph{Statistical attack} Attacker uses knowledge obtained from group statistics.
+
+\subsection{Malton: Towards On-Device Non-Invasive Mobile Malware Analysis for ART}
+\subsubsection*{[Xue USENIX-Security17]}
+There are over 750k Android malware apps in the first quarter of 2017. Current Android malware analysis tools either:
+\begin{enumerate}
+	\item focus on a specific layer,
+	\item run in the emulator,
+	\item modify the DVM or the ART compiler, or
+	\item modify the target apps.
+\end{enumerate}
+
+Current malware can detect whether they're being run in an emulator or in debug mode. They also employ obfuscation to evade static analysis detection.\\
+
+Malton is a tool with multi-layer monitoring, information flow tracking, and path exploration. \\
+
+The test involved collecting samples based on analyzed samples. Malton detected some stealthy behaviors such as phone calls and native code loading. It stores collected information in log files.\\
+
+Malton is based off Valgrind. Malware samples can eventually detect existence of Malton and stop executing.\\
+
+In-memory optimization reduces the code that needs to be executed. This is semi-automated as analysts have to specify entry/exit points.
+
+\subsection{Cracking Android Pattern Lock in Five Attempts}
+\subsubsection*{[Ye NDSS17]}
+Pattern lock is a method of unlocking Android phones where users have to draw a sequence on a 3-by-3 dot grid satisfying several constraints. Existing solutions to crack pattern locks depend on smudge attacks or minor Wi-Fi signal changes.\\
+
+The attack has five main stages:
+\begin{enumerate}
+	\item \textbf{Filming and pre-processing.} Find segment of video with the unlocking process using spatial-temporal heuristics.
+	\item \textbf{Track fingertip locations.} Use tracking-learning-detection algorithm to find the trajectory of the fingertips. This requires location of the fingertip as well as some part of the device to calibrate for camera shakes.
+	\item \textbf{Filming angle transformation.} Use matrix transformations to show pattern in user perspective.
+	\item \textbf{Identify and rank candidate patterns.} Identify patterns based on number of segments, line length, and slopes.
+	\item \textbf{Test patterns.} People tend to start from left to right.
+\end{enumerate}
+
+Data collection showed that more complex patterns were easier to crack than simple patterns. A test was done where people submitted their patterns.\\
+
+Camera shake can be tolerated. Filming gave better results than direct observation.
+
+\subsection{Proximity Based IoT Device Authentication}
+\subsubsection*{[Zhang INFOCOM17]}
+Wi-Fi routers that need to authenticate devices usually do this through a pre-shared key (PSK). This isn't available on IoT devices without a keyboard/screen. IoT devices connect with smartphones to input PSK. There are vulnerabilities with this.\\
+
+The solution is to use \textbf{received signal strength (RSS)}, or how well a smartphone hears a packet. Individual values aren't useful but RSS variation is.
+\begin{itemize}
+	\item \textbf{Fast-changing channel attenuation.} Constantly change distance between two devices.
+	\item \textbf{Antenna polarization.} Two devices rotating relative to each other.
+\end{itemize}
+
+Proximity to the device is important.
+\subsubsection*{Move2Auth protocol}
+When the user wants to send a PSK to the IoT device, the IoT sends a random public key. The IoT also sends identical packets encrypted with a corresponding private key to the smartphone. The user performs a gesture in front of the IoT device.\\
+
+The smartphone records the RSS of each packet and record values of sensor on the phone. Three checks are made:
+
+\begin{enumerate}
+	\item Is the RSS variation big enough? Does it exceed the threshold?
+	\item RSS traces and sensor traces compared based on shape and timing to determine correlation.
+	\item Decryption of received packets. Do contents match?
+\end{enumerate}
+
+Testing was done in twelve locations in a simulated office space.
+
+\subsubsection*{Limitations}
+Have to be in close proximity and can only use a few gestures types. Determining threshold for the protocol can be difficult.
+
+\subsection{SmartGen: Exposing Server URLs of Mobile Apps with Selective Symbolic Execution}
+\subsubsection*{[Zuo WWW17]}
+There are millions of apps and many apps use the internet for additional functionalities. Users don't have to worry about URLs and connections - but some usage is not desired! There is an illusion that the concealed server URLs are unattackable, secure, and hidden.\\
+
+Server URLs are hard to find even if you have a proxy server that listens for network requests. Activities aren't easily navigable by automated means as some fields may require input validation. Even by going through app manually to find URLs, it is not guaranteed that all hidden paths will be found.\\
+
+Even if the app is decompiled, parameter constraints can be hidden (pattern matching, predicates, input length, field confirmation, etc.), and other problems such as obfuscation or data format recognition.\\
+
+Static analysis is scalable but not effective. Dynamic analysis tools are powerful but tools are limited. Emulators are slow.\\
+
+\textbf{Symbolic execution} is the replacement of fixed inputs with symbols. This is done in conjunction with taint analysis\footnote{A method to check which variables can be modified by user input.} to identify constraints on code execution.\\
+
+SmartGen is a targeted symbolic execution-enabled tool that works at the UI and system level. It is fully automated and is scalable. It constructs an extended call graph (with Soot!) using static analysis, and traverses graph to find invocations of network message sending APIs. It then extracts corresponding path constraints and solves them using z3. Afterwards, it executes app using new dynamic runtime and generates request messages with server URLs.
+
+
 \end{document}

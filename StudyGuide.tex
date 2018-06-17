@@ -1643,10 +1643,68 @@ The probabilities of \textit{results with or without an individual} are almost t
 \newpage
 \section{Seminars}
 \subsection{Stack Overflow Considered Harmful? The Impact of Copy \& Paste on Android Application Security}
-\textbf{[Fischer SP17]}
+\subsubsection*{[Fischer SP17]}
+\textbf{StackOverflow} is a great place to get code snippets for all situations, including security-related situations. How safe is it to copy/paste such code into production software?
+
+\subsubsection*{Grabbing code snippets}
+\begin{enumerate}
+	\item Download code from SO (all of them are in code tags)
+	\item Determine if code is security related. Code is security related if it has calls to: \begin{itemize}
+		\item Cryptography APIs
+		\item Secure network communication APIs
+		\item Public key infrastructure APIs
+		\item Authentication/access control APIs
+		\item BouncyCastle/SpongyCastle
+		\item \texttt{HttpClient}
+		\item Other libraries such as \texttt{jaspyt} or GNU Crypto
+	\end{itemize}
+	\item Classify code security. Manually analyze samples to train a machine learning algorithm (\textbf{Support Vector Machine}). 1360 snippets were classified.
+\end{enumerate}
+
+\begin{shaded}
+\textbf{Code security}\\
+\begin{multicols}{2}
+Secure code snippets contained:
+\begin{itemize}
+	\item Good algorithm choice
+	\item Secure length of keys
+	\item Secure RNG
+\end{itemize}
+\vfill\null
+\columnbreak
+
+They were insecure if they had:
+\begin{itemize}
+\item Outdated algorithms
+\item Static IVs/keys
+\item Weak key lengths
+\item Insecure RNG
+\item Insecure TLS implementations	
+\end{itemize}
+\end{multicols}
+
+\end{shaded}
+
+Out of the 1360 snippets, 420 were insecure. This classifier was then applied to the rest of the snippets from questions and answers. 
+
+\subsubsection*{Finding C/P code in real world apps}
+The StackOverflow code was compiled into the same intermediate representation in DEX files with \textbf{WALA}. 85.2\% of answer snippets were converted. An exact match wasn't needed.\\
+
+A program dependency graph (PDG) was made for each method. Data-independent subgraphs of a method are \textbf{semantic blocks}, and code similarity was given by the number of shared semantic blocks which share constants and method names. This process is automated.
+
+\subsubsection*{Results}
+\begin{itemize}
+	\item Scraped over 4000 security related Android code snippets. About 30\% of them were insecure.
+	\item Downloaded over 1.3 million free apps from the Play Store. 200k of them had SO code snippets; 196k (15\% of total) had at least one insecure snippet.
+	\item The top offending snippet had to do with \texttt{TrustManager} with no server verification which could allow for MITM attacks.
+\end{itemize}
+
+\subsubsection*{Criticism}
+Security is more than just algorithm and key-length. ML can't understand code yet so it could miss vulnerabilities. Code without context can result in an insecure labelling even if it's not used for security purposes.
+
 
 \subsection{Cloak and Dagger: From Two Permissions to Complete Control of the UI Feedback Loop}
-\textbf{[Fratantonio SP17]}\\
+\subsubsection*{[Fratantonio SP17]}
 
 The main point is to do malicious things to the user's phone without them being aware of it. Examples are: stealing logins, installing apps, clicking on ads, calling foreign numbers. This is done by \textbf{controlling the UI feedback loop} and manipulating what the user sees.
 

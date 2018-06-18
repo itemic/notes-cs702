@@ -24,7 +24,8 @@
 \usepackage{url}
 \usepackage{pifont}
 \usepackage{tabularx}
-\providecommand*{\checkmark}{\ding{51}}
+\providecommand*{\checkmark}{\textcolor{ForestGreen}{\ding{51}}}
+\providecommand*{\xmark}{\textcolor{BrickRed}{\ding{55}}}
 % code by Andrew:
 % http://tex.stackexchange.com/a/28452/13304
 \makeatletter
@@ -37,6 +38,11 @@
 	\matamp
 	\fi}
 \makeatother
+
+\lstset{basicstyle=\footnotesize\ttfamily,breaklines=true}
+\lstset{framextopmargin=0pt,frame=bottom}
+\lstset{backgroundcolor = \color[rgb]{0.98,0.98,0.98}}
+\lstset{numbers=left}
 
 \newcounter{lines}
 \def\endlr{\stepcounter{lines}\\}
@@ -582,170 +588,118 @@ An app can allow IT admins to remotely control the availability of features or c
 \newpage
 \section{iOS Security}
 \subsection{Overview}
+Smartphones are always with us. They contain lots of data on them, such as passwords, contacts, and documents. It's likely for them to be lost or stolen. They're always on, and so present a continuous target. They change networks repeatedly, between wireless and cellular networks, resulting in a greater chance of a man-in-the-middle attack. People are less likely to use long passphrases due to keyboard limitations.\\
+
+Smartphones are subject to almost all standard security attacks: malicious sites, Trojan horses, buffer overflow attacks, social engineering, etc.\\
+
+We want to protect the data on the device, data sent/received by the device, our apps, the operating system. We want to make sure the device works properly!
+
+\subsection{Introduction to iOS security}
+\subsubsection*{iPhone OS 1.0 (2007)}
+iPhone OS 1.0 was a cut down version of OS X and offered very little in terms of security:
 \begin{itemize}
-    \item Always with us - Likely to be lost or stolen
-    \item Always on - Continuous target
-    \item Change networks repeatedly - Greater change of MitM attacks
-    \item Password protection - less likely to use long passwords\\
+	\item No privilege separation. All processes ran as root.
+	\item No code signing.
+	\item No data execution prevention (DEP)
+	\item No address space layout randomization (ASLR)
+	\item No sandboxing
 \end{itemize}
 
-Smartphones are subject to almost all of the standard security attacks
-\begin{itemize}
-    \item Malicious websites
-    \item Trojan horses
-    \item Buffer overflow attacks
-    \item Social engineering\\
-\end{itemize}
+There was some attempt to reduce the attack surface. It did not support Flash or have a shell. The mobile version of Safari, MobileSafari, did not deal with all formats that Safari could. Its PDF viewer only parses a few features (PDF rendering has still been used in many exploits).
 
-We are trying to protect
-\begin{itemize}
-    \item Data on the device
-    \item Data sent or received by the device
-    \item Our applications
-    \item OS
-\end{itemize}
 
-\subsection{Introduction to iOS Security}
-\subsubsection{OS 1.0 (2007)}
-\begin{itemize}
-    \item Very \textbf{little} in terms of security
-    \begin{itemize}
-        \item No privilege separation
-        \item No code signing
-        \item No Data Execution Prevention
-        \item No Address Space Layout Randomisation
-        \item No sandboxing
-    \end{itemize}
-\end{itemize}
+\subsubsection*{iOS 2 onwards}
+Security was taken much more seriously. The App Store was introduced in iOS 2 (2008).
 
-\subsubsection{iOS 1.0}
-\begin{itemize}
-    \item There was an attempt to \textbf{reduce the attack surface}
-    \item No support of flash or shell
-    \item \textbf{Limited file formats}
-    \begin{itemize}
-        \item MobileSafari cannot deal with all formats acceptable to Safari
-        \item PDF viewer only parses some features - PDF rendering has still been used in many exploits
-    \end{itemize}
-\end{itemize}
+\subsubsection*{Users and security}
+There is a trade-off of some degree between convenience and security.
 
-\subsubsection{iOS 2-11}
-Security was taken much more seriously
+
 \subsubsection*{Passcodes}
-\begin{itemize}
-    \item Passcode, Touch ID, Face ID
-    \item Springboard \textbf{slows down} after repeated attempts
-    \item Users can set the device to erase data after 10 attempts
-    \item Delays between passcode attempts
-    \item Restriction passcode - different from device passcode, for controlling access to apps
-    \item App privileges - user is asked when apps first attempt to use 'private' information
-\end{itemize}
+Use a passcode. This prevents easy access to others and can be used to encrypt files on device. This should be combined with auto-lock, so attackers would need the passcode to access the device.\\
 
-\subsubsection*{Preventing Phone Theft}
-\begin{itemize}
-    \item Mobile phone theft is a major problem
-    \item Cannot erase device without password
-    \item Find My iPhone
-    \begin{itemize}
-        \item Lock device
-        \item Device tracking
-        \item Erase data - done by deleting the file system encryption key
-        \item Activation Lock - cannot turn off any features without the ID and password
-    \end{itemize}
-    \item Kill switch - Apple can disable or delete an app on your device
-    \item Cannot restore backup without the password
-\end{itemize}
+Use a strong passcode. A delay is enforced after repeated incorrect passcode brute force attempts (up to 1 hour at 9 attempts). Data protection can be enabled so that all data is erased after 10 failed attempts.\\
 
-\subsection{iOS Device and App Trust Evaluation}
-\subsubsection{Code Signing}
-\begin{itemize}
-    \item Mandatory
-    \item Only apps signed by Apple are installed
-    \item Device checks certificate and signature before running the app
-    \item App code and memory continually checked as it runs
-\end{itemize}
+A separate restriction passcode is available for access to apps (think: parental controls). Every time you leave the Restrictions screen you need to re-enter the passcode.
 
-\subsubsection*{Verifying Signing}
-\begin{itemize}
-    \item Verify the signer, and the integrity of the App (code)
-    \item When an executable is loaded, the signature is loaded and checked in kernel. If it is \textbf{not} in the static trust cache, a function is called to check the signature
-    \item Apps that come with the device do not have a signature, the binaries hash is stored in the iOS kernel in the static trust cache
-\end{itemize}
+\subsubsection*{App privileges}
+Since iOS 6, the user is asked when apps attempt to use certain services, such as Location Services.\\
 
-\subsubsection*{Digital Signatures}
-\begin{itemize}
-    \item Public key cryptography - signer encrypts using \textbf{private key}
-    \item Hashing - app digest
-\end{itemize}
+These can be considered MAC policies.
+
+\subsubsection*{Mobile phone theft}
+\begin{shaded}
+\textbf{Find My iPhone} \\
+This feature must be set up on device and uses the user's Apple ID. Apple devices can be put into Lost Mode so that a passcode is required to unlock the device. The device is also tracked on a map, and emails are sent when any event happens.\\
+
+All data can be erased by deleting the filesystem encryption key.
+\end{shaded}
+
+In iOS 7, Activation Lock was introduced. The Apple ID of the device is stored on Apple's activation servers. Find My iPhone cannot be turned off and the phone can't be erased or reactivated without it.\\
+
+An encrypted backup cannot be restored without the password.
+
+\subsubsection*{Kill switch}
+Apple can remotely delete apps on your device. It is not clear if it has been used in the past. Google has it as well and they've used it. This is part of their terms and conditions.
+
+\subsection{iOS device and app trust evaluation}
+iOS verifies trusted apps with mandatory \textbf{code signing}. Only apps signed by Apple (or by someone certified by Apple) are installed.\\
+
+The device checks the certificate and signature before running the app. The app code and memory is continually checked as the app runs.\\
+
+Signing involves verifying the signer and the integrity of the app code.\\
+
+When an executable is loaded, the signature is loaded and checked in kernel. If it is \underline{not} in the \textbf{static trust cache}, a function is called to check the signature.\\
+
+Apps that come with the device don't have a signature; the binary's hash is stored in the iOS kernel in the static trust cache.
+
+\subsubsection*{Digital signatures}
+\paragraph{Public key cryptography.} A key pair with a public key and a private key. The signer encrypts using the private key.
+\paragraph{Hashing} An app digest. The hashes of two different apps are different.\\
 
 \begin{figure}[h]
 \centering
-\caption{Verifying integrity of an application}
-\includegraphics[width=0.5\textwidth]{graphics/applesignature}
+\caption{Verifying integrity of an application \textit{(Note: S is the digital signature)}}
+\includegraphics[width=0.9\textwidth]{graphics/iossign}
 \end{figure}
 
-The App Developer sends the App to Apple who review and sign the application. The signature comprises of \textbf{encrypting the hash} of the app with Apple's \textbf{private key}. To verify the App, decrypt the signature using Apple's \textbf{public key} and compare the decrypted hash with the hash of the app.
+The app developer sends an app to Apple who review and sign the application. The \textbf{signature} comprises of encrypting the app hash with Apple's private key. To verify the app, decrypt the signature with Apple's public key and verify that the hashes are the same.\\
 
-\subsubsection{iOS App Testing}
+\subsubsection{iOS app testing}
 \textbf{Problem:} If signing is always required, how can app developers test or debug newly developed apps?
 
-\subsubsection*{Apple Provided Certificates}
-Certify that \textit{Alice} holds the private key of the public key to be used by \textit{Bob's} iPhone.
-\begin{itemize}
-    \item App development - \textbf{developer certificate}
-    \item App distribution - \textbf{distribution certificate}
-\end{itemize}
+\subsubsection*{Apple provided certificates}
+Certify that Alice holds private key of the public key to be used by Bob's iPhone.
+
+Certify that \textit{Alice} holds the private key of the public key to be used by \textit{Bob's} iPhone.\\
+
+Apple provides a \textbf{developer certificate} for app development and a \textbf{distribution certificate} for app distribution.
 
 \begin{shaded}
-Certificate = Public Key(Message) + Apple's Digital Signature
+Certificate = public key(Message) + Apple's digital signature
 \end{shaded}
 
 \subsubsection{Provisioning Profiles}
-A provisioning profile is required for an app that is being developed to be installed on a certain device. Configures the device to allow the execution of signed code. Installed on a device \textbf{only} if the device ID is in the profile.\newline
+\paragraph{Provisioning profile} An XML property list (plist) required for an app that is being developed to be installed on a certain device. It configures the device to allow the execution of signed code. It is installed on the device only if the device ID is in the profile.\\
 
-Provisioning profiles consist of:
-\begin{itemize}
-    \item An XML property list
-    \begin{itemize}
-        \item App ID - random characters followed by the company ID and app name
-        \item Which \textbf{devices} - Each device has a unique device id (UDID)
-        \item Developer certificate
-        \item Entitlements
-    \end{itemize}
-\end{itemize}
+The plist describes which app (App ID; random characters followed by company ID/name), which devices (each device has a 40-char hex unique device ID), developer certificate, and entitlements.\\
 
-Validating a Provisioning Profile
+\textbf{Entitlements} add policies regarding what an app can do or allow debugging. Apple can add entitlements to limit functionality.
+
+\subsubsection*{Validating a provisioning profile}
+\textbf{Apple iPhone OS Provisioning Profile Signing.} The signing certificate is signed by Apple. The signing certificate chain is no longer than three links:
 \begin{itemize}
-    \item The signing certificate is signed by Apple - called Apple iPhone OS Provisioning Profile Signing
-    \item Certificate signing chain is no longer than three links
-    \begin{itemize}
-        \item \textbf{Development} - Developer, Apple Root CA
-        \item \textbf{Deployment on App Store} - Apple iPhone OS Application Signing, Apple Root CA
-    \end{itemize}
+	\item \textbf{Development.} Developer - Apple Worldwide Developer Relations CA - Apple Root CA
+	\item \textbf{Deployment.} Apple iPhone OS Application Signing - Apple iPhone CA - Apple Root CA
 \end{itemize}
 
 \subsubsection*{Apple Developer Program Team Roles}
-\begin{itemize}
-    \item Team Agent
-    \begin{itemize}
-        \item Legally responsible for the team
-        \item Acts as the initial primary contact with Apple
-        \item Can invite team members and change the access level of any other team member
-        \item There is only one team agent
-    \end{itemize}
-    \item Team Admin
-    \begin{itemize}
-        \item Can set the privilege levels of other team members (except the team agent)
-        \item Manages all assets used to sign your apps (either during development or when your team is ready to distribute an app)
-    \end{itemize}
-    \item Team Member
-    \begin{itemize}
-        \item Can create development certificates
-        \item Register a device connected to their Mac
-        \item Create a development provisioning profile using Xcode
-        \item Cannot register devices
-    \end{itemize}
-\end{itemize}
+The \textbf{team agent} is legally responsible for the team. They act as the initial primary contact with Apple. They can invite team members and change access level of any other team member. There is only one team agent.\\
+
+The \textbf{team admin} can set the privilege levels of other team members (except the agent), and manages all assets used to sign apps (during development or when preparing for distribution).\\
+
+The \textbf{team member} can create development certificate, register devices connected to their Mac, create development provisioning profiles on Xcode. They cannot register devices.
+
 
 \begin{table}[h]
 \centering
@@ -753,11 +707,11 @@ Validating a Provisioning Profile
 \begin{tabular}{|l|l|l|l|}
 \hline
 \textbf{Privilege}                       & \textbf{Team Agent} & \textbf{Team Admin} & \textbf{Team Member} \\ \hline
-Accept legal agreements                  & \checkmark                   & x                   & x                    \\ \hline
-Renew membership                         & \checkmark                   & x                   & x                    \\ \hline
-Create Developer ID certificates         & \checkmark                   & x                   & x                    \\ \hline
-Invite members and assign roles          & \checkmark                   & \checkmark                   & x                    \\ \hline
-Create distribution certificates         & \checkmark                   & \checkmark                   & x                    \\ \hline
+Accept legal agreements                  & \checkmark                   & \xmark                   & \xmark                    \\ \hline
+Renew membership                         & \checkmark                   & \xmark                   & \xmark                    \\ \hline
+Create Developer ID certificates         & \checkmark                   & \xmark                   & \xmark                    \\ \hline
+Invite members and assign roles          & \checkmark                   & \checkmark                   & \xmark                    \\ \hline
+Create distribution certificates         & \checkmark                   & \checkmark                   & \xmark                    \\ \hline
 Create development provisioning profiles & \checkmark                   & \checkmark                   & \checkmark                    \\ \hline
 \end{tabular}
 \end{table}
@@ -772,20 +726,13 @@ Create development provisioning profiles & \checkmark                   & \check
 \textbf{Resources}        & \textbf{Apple ID} & \textbf{Individual}       & \textbf{Organisation}     & \textbf{Enterprise Program} \\ \hline
 Xcode Developer Tools     & \checkmark      & \checkmark & \checkmark & \checkmark   \\ \hline
 Test on Device            & \checkmark      & \checkmark & \checkmark & \checkmark   \\ \hline
-App Store Distribution    &                                & \checkmark & \checkmark &                             \\ \hline
-In-house App Distribution &                                &                           &                           & \checkmark   \\ \hline
-Team Management           &                                &                           & \checkmark & \checkmark   \\ \hline
-App Analytics             &                                & \checkmark & \checkmark &                             \\ \hline
-Cost                      & Free                           & 99 USD                    & 99 USD                    & 299 USD                     \\ \hline
+App Store Distribution    &         \xmark                       & \checkmark & \checkmark &   \xmark                          \\ \hline
+In-house App Distribution &    \xmark                            & \xmark                          &   \xmark                        & \checkmark   \\ \hline
+Team Management           &           \xmark                     & \xmark                          & \checkmark & \checkmark   \\ \hline
+App Analytics             & \xmark                               & \checkmark & \checkmark &  \xmark                           \\ \hline
+Cost                      & Free                           & \$99 USD                    & \$99 USD                    & \$299 USD                     \\ \hline
 \end{tabular}
 \end{table}
-
-\subsubsection*{Entitlements}
-\begin{itemize}
-    \item Policies regarding what an app can do (e.g. debugging)
-    \item Apple can add entitlements to limit functionality
-    \item Stored in a property list
-\end{itemize}
 
 \begin{figure}[h]
 \centering
@@ -793,381 +740,204 @@ Cost                      & Free                           & 99 USD             
 \includegraphics[width=0.75\textwidth]{graphics/iosAppDevelopmentProvisioningProfiles}
 \end{figure}
 
-\subsubsection{App Store Deployment}
-\begin{itemize}
-    \item Apple certifies and signs the app bundle
-    \begin{itemize}
-        \item App ID
-        \item No device information
-        \item Trust is based on Apple's certificate
-    \end{itemize}
-    \item Because Appl checks the app before distribution, it acts like an antivirus program
-\end{itemize}
+\subsubsection{App Store deployment}
+Apple certifies and signs the app bundle (executable, resources, etc.) App ID and no device information. Trust is based on Apple's certificate. iOS ships with root anchors for certificate chains.\\
+
+There is no need for antivirus apps on iOS as Apple checks the app before distribution.
 
 \subsubsection*{Certificate Revocation}
 Apple supports revocation through
 \begin{itemize}
-    \item Certificate Revocation List (CRL) - Server holds a list of revoked certificates
-    \item Online Certificate Status Protocol (OCSP)
+    \item \textbf{Certificate Revocation List (CRL).} Server holds a list of revoked certificates
+    \item \textbf{Online Certificate Status Protocol (OCSP)}
 \end{itemize}
 
 \subsubsection*{Sideloading in iOS}
-\begin{itemize}
-    \item Developers can release open-source apps outside of the App Store
-    \item Interested users can compile and run it on their own devices
-    \item A bit more complicated than Android because slideloading requires a physical connection and a Mac running Xcode
-\end{itemize}
+Developers can release open source apps out of the App Store. Interested users can compile it in Xcode and run it on their own devices to bypass the App Store.\\
 
-\subsection{Data Execution Prevention}
-\subsubsection{Stack Overflow Attack}
-Occurs when a program writes to a memory address on the program's call stack outside of the intended data structure, which is usually a fixed-length buffer. \newline
+Compared to Android, it is much more complicated as it requires a physical connection to a Mac that has Xcode. The purpose of this is so that developers can test software on real hardware.
 
-\begin{shaded}
+
+\subsection{Data execution prevention}
+A \textbf{stack overflow attack} occurs when a program writes to a memory address on the program's call stack outside of the intended data structure, which is usually a fixed-length buffer.
+
 \begin{lstlisting}
 A()
 {
-    B(5);
-    printf("done");
+   B(5);
+   printf("done");
 }
 
 B(int a)
 {
-    char name[5];
-    gets(name);
+   char name[5];
+   gets(name);
 }
 \end{lstlisting}
-\end{shaded}
-
-If the value of \texttt{name} is larger than 5 characters, it starts to corrupt the stack. If you pass in \begin{lstlisting}
-<nop><malware><addrs of name[1]>
-\end{lstlisting} you will overwrite the return address of A() to be the address of \textit{name[1]} which is the location of the inserted malware.
+If the value of \texttt{name} is larger than 5 characters, it starts to corrupt the stack. If you pass in \texttt{
+<nop><malware><addrs of name[1]>} you will overwrite the return address of \texttt{A()} to be the address of \texttt{name[1]} which is the location of the inserted malware.\\
 
 \begin{figure}[h]
 \centering
 \caption{Stack Overflow Attack}
-\includegraphics[width=0.3\textwidth]{graphics/stack}
+\includegraphics[width=0.4\textwidth]{graphics/stack}
 \end{figure}
 
-\subsubsection*{How to prevent Stack/Buffer Overflow Attack?}
-\begin{itemize}
-    \item Do not allow writable pages to be executable
-    \item Data Execution Prevention (DEP)
-\end{itemize}
+To prevent buffer overflow attacks, don't allow writable pages to be executable. \\
 
-\subsubsection{Data Execution Prevention}
-\begin{itemize}
-    \item Executable pages are not writable
-    \item Prevents code modification - uses the ARM NX bit on pages (never execute)
-    \item Prevents dynamic production of code - except Mobile Safari JIT code
-    \item All page requests and permission changes are checked
-\end{itemize}
+\paragraph{Data execution prevention} Executable pages are not writable. This prevents code modification (uses ARM NX bit on pages; never execute) and prevents dynamic production of code (except MobileSafari JIT code). All page requests and permission changes are checked.\\
 
-\subsubsection*{Bypassing DEP}
-\begin{itemize}
-    \item 'return-to-libc' exploits
-    \item Point return address to system() in libc
-    \item Call to system() not allowed in iOS
-    \item Return Oriented Programming - inspired by 'return-to-libc'
-\end{itemize}
+DEP can be bypassed with \textbf{return-to-libc} exploits. With this, point return address to \texttt{system()} in libc. Call to \texttt{system()} is not allowed in iOS.\\
 
-\subsubsection*{Mobile Safari JIT}
-\begin{itemize}
-    \item DEP ruled out JIT compiling but is essential for making mobile Safari faster
-    \item A compromise - mobile Safari (only) allowed to make writable and executable memory region
-    \item Only one such memory region allowed
-    \item The checks only made in kernel at runtime
-    \item Shell code (malicious) can be written to JIT buffer area
-\end{itemize}
+\textbf{Return oriented programming} was inspired by return-to-libc.
 
-\subsubsection{Return Oriented Programming}
-\begin{itemize}
-    \item Attacker gains control of call stack to hijack control flow, executes carefully chosen machine sequences that are already present in the machine's memory, called \textit{gadgets}
-    \item Each gadget typically ends in a return instruction and is located in a subroutine within the existing program
-    \item Gadgets are chained together to perform the actions
-    \item ROP to disable DEP exists - ineffective in iOS due to code signing
-    \item In iOS, ROP payload should contain the malware - difficult
-    \item \textbf{Limitations} - For ROP to succeed, the memory map (addresses) of an App (in execution) need to be found (Executable code, Heap, Stack)
-\end{itemize}
 
-\subsection{Address Space Layout Randomisation (ASLR)}
-\begin{itemize}
-    \item Code signing and DEP not sufficient to withstand ROP
-    \item Randomize the memory location (base address) of key program components
-    \item Was originally designed to overcome "return-to-libc" attack
-    \begin{itemize}
-        \item Randomize libraries
-        \item Partial ASLR
-    \end{itemize}
-    \item Works best if all code is compiled with the Position Independent Execution (PIE) flag
-    \begin{itemize}
-        \item Full ASLR
-        \item Many third party apps are not compiled for PIE
-    \end{itemize}
-\end{itemize}
+\subsubsection*{MobileSafari JIT}
+DEP ruled out just-in-time (JIT) compiling, which is essential for making MobileSafari faster. A compromise was made - only MobileSafari is allowed to make writable and executable memory region. Only one such memory region is allowed. The checks only made in kernel at runtime. Malicious shell code can be written to JIT buffer area; so MobileSafari flaws can result in malware being injected.
+
+\subsubsection*{Return-oriented programming}
+Attacker gains control of call stack to hijack control flow and executes carefully chosen machine sequences (\textit{gadgets}) that are already present in machine's memory.\\
+
+Each gadget typically ends in a return instruction and is located in a subroutine within existing program. They are chained together to perform actions.\\
+
+ROP to disable DEP exists, but is ineffective in iOS due to code signing. In iOS, ROP payload should contain the malware but this is difficult.\\
+
+For ROP to succeed, the memory addresses of an app in execution need to be found (in executable code, heap, stack).
+
+
+\subsection{Address Space Layout Randomization (ASLR)}
+Code signing and DEP are not sufficient to withstand ROP. \textbf{ASLR} randomizes the memory location (base address) of key program components. It was originally designed to overcome return-to-libc attacks.\\
+
+ASLR works best if all code is compiled with the \textbf{position independent execution} (PIE) flag. Many third-party apps are not compiled for PIE.\\
+
 
 \begin{figure}[h]
 \centering
 \caption{ASLR}
-\includegraphics[width=0.5\textwidth]{graphics/aslr}
-\end{figure}
-
-\begin{table}[h]
-\centering
-\caption{Partial vs Full ASLR - (R = Randomised)}
-\begin{tabular}{|l|l|l|l|l|l|}
-\hline
-\textbf{PIE} & \textbf{Main Executable} & \textbf{Heap}   & \textbf{Stack}  & \textbf{Shared Libraries} & \textbf{Linker} \\ \hline
-No           & Fixed                    & R per execution & Fixed           & R per device boot         & Fixed           \\ \hline
-Yes          & R per execution          & R per execution & R per execution & R per device boot         & R per execution  \\ \hline
-\end{tabular}
-\end{table}
-
-\subsubsection*{ASLR Based on Entropy}
-\begin{itemize}
-    \item Single non-randomised area can be enough for attacker
-    \item The larger the range of entropy, the better (32bit vs 64 bit)
-    \item Relocation frequency - randomisation during boot time vs execution time
-\end{itemize}
-
-\subsubsection*{Address Leakage}
-\begin{itemize}
-    \item Getting address information from an app
-    \item Brute force can be effective
-    \item Lots of exploits have been designed to leak addresses
-    \item Even PIE is not enough, we really need every function scattered randomly through the address space - finding one address means we can easily determine others
-\end{itemize}
-
-\subsubsection*{ASLR in Different Mobile OS}
-\begin{itemize}
-    \item iOS
-    \begin{itemize}
-        \item Apple introduced ASLR in iOS 4.3
-        \item Full ASLR support in iOS5 and later
-    \end{itemize}
-    \item Android
-    \begin{itemize}
-        \item Android 4.0 provides ASLR
-        \item Full ASLR was supported in Android 4.1
-        \item Android 5.0 dropped non-PIE support and requires all dynamically linked binaries to be position independent
-    \end{itemize}
-\end{itemize}
-
-\subsection{Preventing Malicious Apps}
-\begin{itemize}
-    \item Prevent malicious apps at submission time - static and dynamic analysis
-    \item Prevent malicious apps at install (or load) time - Code Signing Enforcement (CSE)
-    \item OS also prevents malicious apps -  DEP and ASLR
-\end{itemize}
-
-\subsection{iOS Sandboxing}
-\textbf{Sandboxing} is isolating app data and code execution from other app's \textit{so that if the app is compromised, it's effect on other apps is minimised}. Also allows for a set of fine-grained \textit{per-app-based access control} that restricts Apps access to resources.\\
-
-\begin{itemize}
-    \item Developer expresses what resource each app requires
-    \item Based on the request, iOS allows/denis resources to the app
-    \item Each app runs in its own container
-    \item User controls access to documents
-\end{itemize}
-
-\textbf{Entitlements} are part of the provisioning profile. The developer mentions what specific resource the app requires. One of the entitlements is enabling app sandboxing, doing so removes all but a minimal set of privileges. Other required privileges are restored one-by-one using appropriate entitlements.
-
-\subsubsection{App Container}
-\begin{itemize}
-    \item App's access to the file system is limited to container directories
-    \begin{itemize}
-        \item For iOS 8-9, container stored within \textit{var/mobile/Containers}
-        \item iOS 10, container stored within \textit{/var/Containers}
-    \end{itemize}
-    \item Each container directory has a specific role
-    \begin{itemize}
-        \item Bundle: read-only, signed to prevent writing by user, contains the app and all its resources
-        \item Data: various sub-directories to organise app's data
-    \end{itemize}
-\end{itemize}
-
-\begin{table}[h]
-\centering
-\caption{What do Container Directories Store}
-\begin{tabularx}{\textwidth}{|lX|lX|}
-\hline
-\textbf{Subdirectory}                 & \textbf{Description}                                                                                               \\ \hline
-\textless{}AppName\textgreater{}.app/ & The signed bundle containing the application code and static data                                                  \\ \hline
-Documents/                            & App-specific user-created data files that may be shared with the user's desktop                                    \\ \hline
-Library/                              & Application support files                                                                                          \\ \hline
-Library/Preferences/                  & Application-specific preferences files                                                                             \\ \hline
-Library/Caches                        & App-specific data that should persist across successive launches of the application but not needed to be backed up \\ \hline
-tmp/                                  & Temporary files that do not need to persist across successive launches of the application                          \\ \hline
-\end{tabularx}
-\end{table}
-
-\subsubsection*{Accessing Outside Files}
-\begin{itemize}
-    \item To be specified using entitlements
-    \item Programmatic access to standard location
-    \begin{itemize}
-        \item Downloads \textit{(com.apple.security.files.downloads.read-write)}
-        \item Music \textit{(com.apple.security.assets.music.read-only / .read-write)}
-    \end{itemize}
-    \item User selected files (open, save, drag-drop, etc.)
-\end{itemize}
-
-\subsubsection*{Sharing Data Outside Sandbox}
-\begin{itemize}
-    \item Very limited channels
-    \item Apps with the same \textit{ApplicationIdentifierPrefix}
-    \begin{itemize}
-        \item Which means the same developer
-        \item Can share data through the keychain
-    \end{itemize}
-    \item Can also share data via servers
-    \item And of course via the clipboard
-\end{itemize}
-
-\subsubsection{Sandbox Implementation}
-\begin{itemize}
-    \item Implemented as a policy module in TrustedBSD MACF
-    \item The valid opersations of a process are constituted as policies - polices stored as a set of rules (aka profile)
-    \item User space library functions to turn the profile to system calls for installing and configuring sandbox
-    \item A kernel extension to evaluate policy restrictions
-    \item A kernel extension to enforce individual policies
-    \item A Mach server for handling logging from the kernel and holding prebuilt configurations
-\end{itemize}
-
-\subsubsection*{Profile}
-\begin{itemize}
-    \item A set of per-process conditional rules defining access to system calls
-    \item Rules can require capabilities (entitlement, sandbox extension)
-    \item Stored as \textit{compiled binary blobs}
-    \begin{itemize}
-        \item In \textit{sandboxd} for iOS 5-8
-        \item In \textit{sandbox} kernel extension for iOS 2,4, $>$=9
-        \item Until iOS 8, different blob for different sandbox profile
-        \item For iOS $\geq$9, single binary blob
-    \end{itemize}
-    \item Written in Sandbox Profile Language(SBPL)
-    \begin{itemize}
-        \item Each rule consists of
-        \begin{itemize}
-            \item decision - deny
-            \item operation - file-read*
-            \item filter - literal "/bin/a.txt"
-        \end{itemize}
-        \item SBPL code compiled to binary blob graphs
-        \item built-in profiles for built-in apps
-        \item "container sandbox profile" for all third-party apps
-    \end{itemize}
-    \item Filter - filter type (literal), filter value ("/bin/a.txt")
-    \item Metafilter - logical operation of filters
-    \begin{itemize}
-        \item require-all (AND)
-        \item require-any (OR)
-        \item require-not (NOT)
-        \item require-entitlement implies require-all
-    \end{itemize}
-\end{itemize}
-
-\begin{figure}[h]
-\centering
-\caption{Profile Storage in iOS}
-\includegraphics[width=0.5\textwidth]{graphics/profileblobs}
-\end{figure}
-
-\begin{figure}[h]
-\centering
-\caption{Sandbox Profile}
-\includegraphics[width=0.75\textwidth]{graphics/profilestorage}
+\includegraphics[width=0.7\textwidth]{graphics/aslr}
 \end{figure}
 
 \begin{figure}[h!]
 \centering
-\caption{Graph-like View for Operation Node Array}
-\includegraphics[width=0.75\textwidth]{graphics/operationnodearray}
+\caption{Partial vs. full ASLR}
+\includegraphics[width=0.9\textwidth]{graphics/aslrtable}
 \end{figure}
 
-\newpage
-\subsubsection{How does Sandboxing work?}
+\textbf{ASLR based on entropy.} Single non-randomized area can be enough for attacker. The larger the range of entropy (32/64-bit), the better. Relocation frequency is important as well (randomization during boot time vs. execution time).
+
+\subsubsection*{Address Leakage}
+Getting address information from an app. Brute force can be effective. Lots of exploits have been designed to leak addresses. PIE is not enough; we need every function/method scattered randomly through address space, or if we find one address we can determine others.\\
+
+DEP and ASLR make it harder to mount attacks, but ASLR is still vulnerable to ROP with address leakage.
+
+\subsubsection*{ASLR in iOS}
+Introduced in iOS 4.3 and fully supported starting from iOS 5.
+
+\subsubsection*{ASLR in Android}
+Introduced in Android 4.0 and fully supported starting from Android 4.1. Android 5.0 dropped non-PIE support and required all dynamically linked binaries to be position independent.
+
+\subsubsection*{Preventing malicious apps}
+Static and dynamic analysis to prevent malicious apps at submission time. Prevent malicious apps at install/load-time through code signing enforcement (CSE). OS-level prevention with DEP and ASLR.
+
+\subsection{iOS sandboxing}
+DEP can be bypassed with the return-to-libc attack by overwriting the return address of a caller function with the address of the library function.\\
+
+\paragraph{Sandboxing} Isolating app data and code execution from other apps so that if the app is compromised, its effect on other apps is minimized. Done through a set of fine-grained per-app-based access control that restricts app's access to resources (hardware, network, files, etc.)\\
+
+
+Key idea: developer expresses what resources each app requires, and iOS allows/denies resources to the app. Each app runs in its own container (space in filesystem), and user controls access to documents.
+
+\paragraph{Entitlements} Part of provisioning profile. Developers mentions what specific resources the app requires. One of them is enabling app sandboxing, which removes all but a minimal set of privileges. Other required privileges are restored one-by-one with appropriate entitlements.\\
+
+\subsubsection*{App container}
+An app's access to the file system is limited to container directories created during installation.
 \begin{itemize}
-    \item Once a sandbox is initialised, function calls are hooked by TrustedBSD and pass through Sandbox.kext (for policy enforcement)
-    \item Sandbox.kext consults the list of rules for the current process
-    \item For rules requiring pattern matching support, functions from AppleMatch.kext are imported for performing regular expression matching
-    \item \textit{sandbox} is used to carry tracing and logging information and request for prebuilt profiles
+	\item \textbf{iOS 8 and 9.} Container stored within \texttt{/var/mobile/Containers}
+	\item \textbf{iOS 10.} Container stored within \texttt{var/Containers} 
 \end{itemize}
 
-\subsection{iOS Encryption}
-\subsubsection*{Hardware Support for Encryption}
+Each container directory has a specific role. A \textbf{bundle} container is read-only, signed to prevent writing by user, and contains the app and its resources. The \textbf{data} container has various sub-directories to organize app's data.
+
+What do container directories store?
 \begin{itemize}
-    \item Dedicated AES-256 crypto engine - Built into the DMA path between flash storage and main memory
-    \item Two keys: UID (device unique id) and GID (device group id) fused/compiled to the chip
-    \item Random number generator for creating other keys
-    \item Secure enclave for managing keys
-    \begin{itemize}
-        \item Virtual secure coprocessor
-        \item Communication with application processor using interrupt-driven mailbox and shared memory data buffers
-    \end{itemize}
-    \item Effaceable storage to securely erase keys
-    \begin{itemize}
-        \item Flash drive employs wear-leveling due to which multiple copies of data need to be deleted
-        \item Multiple copies are created when data erased frequently
-        \item Block 0 of the NAND as the effaceable storage - can be addressed directly and erased surely
-    \end{itemize}
+	\item \texttt{APPNAME.app/} The signed bundle with app code and static data
+	\item \texttt{Documents/} App-specific user-created data files that can be shared through the File Sharing features in iTunes.
+	\item \texttt{Library/} App support files.
+	\item \texttt{Library/Preferences/} App-specific preference files.
+	\item \texttt{Library/Caches/} App-specific data that should persist but don't need to be backed up.
+	\item \texttt{tmp/} Temporary files that don't have to persist.
 \end{itemize}
 
-\subsubsection{Attempt 1: Encryption Using Passcode}
+Entitlements are used to access outside files. They can be user selected files, or specific ones with programmatic access to standard locations:
 \begin{itemize}
-    \item Encrypt (AES 256) each file using a passcode (key)
-    \item Main Issues
-    \begin{itemize}
-        \item Brute-forcing
-        \item Changing a passcode will require re-encryption of file content using a new passcode
-    \end{itemize}
+	\item \textbf{Downloads.} \texttt{com.apple.security.files.downloads.read-write}
+	\item \textbf{Music.} \texttt{com.apple.security.assets.music.read-only} / ...\texttt{.read-write}
 \end{itemize}
 
-\textbf{Hardening Brute Forcing} can be done by stretching passcodes using a Key Derivation Function (KDF). Derive a secret key from the passcode generating a passcode key.
-\begin{shaded}
-651426 (passcode) -$>$ KDF -$>$ No9u5Z41+\&m\#4!T01 (passcode key)
-\end{shaded}
+There are limited channels for sharing data outside of sandbox. Apps with the same \textbf{ApplicationIdentifierPrefix} can share data through the keychain (not just passwords now), as they are from the same developer. It's also possible to share data via servers or the clipboard.
 
-\subsubsection{Attempt 2: Encryption Using Passcode Key}
+\subsubsection{Sandbox implementation}
+The sandbox is implemented as a policy module in TrustedBSD MACF.
 \begin{itemize}
-    \item Encrypt each file using the passcode key
-    \item Main Issues
-    \begin{itemize}
-        \item Changing the passcode will require re-encryption of file contents using the new passcode key
-    \end{itemize}
+	\item Valid operations of a process are constituted as policies (and stored as a set of rules; a.k.a. profile)
+	\item User space library functions to turn profile to system calls for installing and configuring sandbox
+	\item A kernel extension (\texttt{sandbox.kext}) to evaluate policy restrictions and a kernel extension to enforce individual policies.
+	\item A Mach server to handle logging from kernel and to hold prebuilt configurations.
 \end{itemize}
 
-\subsubsection{Attempt 3: Layered Encryption}
-\begin{itemize}
-    \item Encrypt each file using a file key
-    \item Encrypt (warp) each file key using the passcode key
-    \item Changing a passcode will just require re-encryption of the file key using the new passcode key
-\end{itemize}
+\subsubsection*{Profile}
+A \textbf{profile} is a set of per-process conditional rules defining access to system calls. Rules can require capabilities (entitlements, sandbox extension). It is written in Sandbox Profile Language (SBPL). \\
+
+Each rule consists of a \textbf{decision} (e.g. deny), \textbf{operation\footnote{Seem symmetrical to MAC policy hooks.}} (e.g. file-read*), and \textbf{filter}\footnote{A filter includes a type and an optional value. Logical operations can be done through metafilters (require-all for AND, require-any for OR, and require-not for NOT; require-entitlement implies require-all.} (e.g. literal \texttt{/bin/a.txt}). SBPL code is compiled into binary blob graphs. There are built-in profiles for built-in apps, and a container sandbox profile for all third-party apps.\\
+
+Stored as \textit{compiled binary blobs}, in \texttt{sandboxd} from iOS 5 to 8, and in \texttt{sandbox} kernel extension for iOS 2, 4, and from 9.\\
+
+Until iOS 8, there is a different blob for a different sandbox profile. From iOS 9 onwards, there is a single binary blob.
 
 \begin{figure}[h]
 \centering
-\caption{Layered Encryption}
-\includegraphics[width=0.5\textwidth]{graphics/layeredencryption}
+\caption{Sandbox overview}
+\includegraphics[width=0.75\textwidth]{graphics/sandbox}
 \end{figure}
 
-\subsubsection{Supporting Access Control}
+\subsubsection*{How does sandboxing work?}
+Sandboxing begins with a call to \texttt{sandbox\_init}, a libSystem function by giving a profile as an argument. \texttt{sandbox\_init} uses \texttt{libSandbox} to convert the profile into a binary format that the kernel expects, which is passed to \texttt{mac\_syscall} and handled by the TrustedBSD subsystem.\\
+
+TrustedBSD passes the sandbox initialization request to \texttt{Sandbox.kext}, which installs the sandbox profile rules for the current process. A return value is sent back when done.\\
+
+When the sandbox is initialized, function calls hooked by TrustedBSD pass through \texttt{Sandbox.kext} for policy enforcement. It consults the list of rules for the current process, and for rules requiring pattern matching, functions from \texttt{AppleMatch.kext} are imported to perform regex matching.\\
+
+\texttt{sandboxd} is used to carry tracing and logging info (and requests for prebuilt profiles.
+
+\subsection{iOS encryption}
+There is hardware support for encryption with a dedicated AES-256 crypto engine built into the DMA path between flash storage and main memory. There are two keys: a unique device ID (UID) and a device group ID (GID) fused to the chip. A random number generator is used to create other keys and a secure enclave manages keys. There is effaceable storage to securely erase keys.\\
+
+The \textbf{Secure Enclave} is a virtual secure coprocessor. It communicates with application processor using interrupt-driven mailbox and shared memory data buffers.\\
+
+Flash drive employs wear-leveling due to which multiple copies of data need to be deleted. Multiple copies are created when data erased frequently.\\ Block 0 of NAND as the \textbf{effaceable storage} and can be addressed directly and deleted surely.
+
+\subsubsection*{Encryption}
+\paragraph{Encrypt each file with a passcode.} Prone to brute-force attacks. Changing passcode will require re-encryption.\\
+
+We can stretch passcodes using a \textbf{key derivation function} and get a secret passcode key from passcode.
+
+\paragraph{Encrypt using passcode key.} Changing passcode still requires re-encryption of contents.
+
+\paragraph{Encrypt each file with a file key and encrypt file key using passcode key.} Changing passcode only requires re-encryption of file key with the new passcode key.
+
+\subsubsection*{Access control}
+Some files should be accessible at any time; others should only be accessible when the device is unlocked. File protection classes via key hierarchy are used.
+
 \begin{itemize}
-    \item File can be accessed when device is unlocked
-    \item File can be accessed anytime
-    \item File protection classes: via key hierarchy
+	\item \texttt{NSFileProtection} \textbf{Complete.} File accessible when device is unlocked. Class key removed 10s after device locked automatically or manually. Useful for mobile banking.
+	\item \texttt{NSFileProtection} \textbf{Complete Unless Open.} File can be created when device is locked but only accessible when device unlocked. Examples: mail attachments, photo/video.
+	\item \texttt{NSFileProtection} \textbf{Complete Until First User Authentication.} Protected unless device is booted and user enters passcode for the first time. Example: SIM contacts.
+	\item \texttt{NSFileProtection} \textbf{None.} File can be accessed at any time. Example: wallpaper.
 \end{itemize}
 
-\begin{figure}[h]
-\centering
-\caption{File Protection Classes}
-\includegraphics[width=0.75\textwidth]{graphics/fileprotectionclasses}
-\end{figure}
+\subsubsection*{Class key}
+Different class keys represent circumstances under which files should be accessed. A file key is encrypted using a class key, and a hardware key and passcode key are used to protect class keys.\\
 
-\subsubsection*{Class Key}
-\begin{itemize}
-    \item Different class keys represent circumstances under which files should be accessed
-    \item A file key is encrypted using a class key
-    \item \textbf{Hardware key} and passcode key are used to protect class keys
-\end{itemize}
 
 \begin{figure}[h]
 \centering
@@ -1175,96 +945,66 @@ tmp/                                  & Temporary files that do not need to pers
 \includegraphics[width=0.75\textwidth]{graphics/classkey}
 \end{figure}
 
-\subsubsection*{Keybags}
+
+Keys for file and keychain data protection classes are colected and managed in \textbf{keybags}. iOS has four keybags:
 \begin{itemize}
-    \item Keys for both file and keychain \textbf{data protection classes} are collected and managed in keybags
-    \item iOS uses four different keybags
-    \begin{itemize}
-        \item System keybag
-        \item Backup keybag
-        \item Escrow keybag
-        \item iCloud backup keybag\\
-    \end{itemize}
+	\item System keybag
+	\item Backup keybag
+	\item Escrow keybag
+	\item iCloud backup keybag
 \end{itemize}
 
-UID key is unique to the device
-\begin{itemize}
-    \item An AES 256-bit hardware key
-    \item Inside secure enclave
-    \item Cannot access it through software
-    \item This encrypts a static string to produce the \textbf{hardware key}
-    \item Neither recorded by Apple nor by any of its suppliers
-\end{itemize}
+The \textbf{UID} is an AES 256-bit hardware key unique to the device. It is in the secure enclave and cannot be accessed through software. This key encrypts a static string to produce the \textbf{hardware/device key}. This is not stored by Apple or its suppliers.
 
 \begin{figure}[h]
 \centering
-\caption{Key Hierarchy for Different Class}
-\includegraphics[width=0.75\textwidth]{graphics/keyhierarchy}
+\caption{Key Hierarchy}
+\includegraphics[width=0.9\textwidth]{graphics/keyhierarchy}
 \end{figure}
 
-\newpage
-\subsubsection*{Complete Unless Open}
-\begin{figure}[h]
+\begin{figure}[h!]
 \centering
 \caption{Creating the File}
-\includegraphics[width=0.75\textwidth]{graphics/creatingthefile}
+\includegraphics[width=0.95\textwidth]{graphics/completeunlessopen}
 \end{figure}
 
-\begin{figure}[h]
-\centering
-\caption{Reading the File}
-\includegraphics[width=0.75\textwidth]{graphics/readingthefile}
-\end{figure}
 
-\subsubsection*{File System Key}
-\begin{itemize}
-    \item File system key encrypts file metadata
-    \begin{itemize}
-        \item Created when iOS is installed or the device is wiped by the user
-        \item Encrypted by the hardware key
-    \end{itemize}
-    \item Encrypted file system key again encrypted by the effaceable key - for quick eraser
-\end{itemize}
+\subsubsection*{File system key}
+File system key encrypts file metadata. It's created when iOS is installed or when the device is wiped by the user. It is encrypted with the hardware key.\\
 
+Encrypted file system key again encrypted by effaceable key (in effaceable storage) for quick erase.
 \begin{figure}[h]
 \centering
 \caption{File System Key}
-\includegraphics[width=0.5\textwidth]{graphics/filesystemkey}
+\includegraphics[width=0.75\textwidth]{graphics/filesystemkey}
 \end{figure}
 
-\newpage
-\subsubsection*{Key Hierarchy}
 \begin{figure}[h]
 \centering
+\caption{Key Hierarchy}
 \includegraphics[width=0.75\textwidth]{graphics/keyhierarchy_2}
 \end{figure}
 
-\subsubsection*{Why Layered Keys}
+\subsubsection*{Why layered keys?}
+The entire filesystem can be rendered useless by wiping filesystem key. Modifying passcode just rewraps the class key. Changing a file's class only requires rewrapping file key. If device key is used, files or keychain items could only be restored using same device.\\
+
+\subsubsection*{Keychain}
+A \textbf{keychain} is a secure container to store short but sensitive data: passwords, keys, login tokens, etc. It is encrypted using 256-bit AES.\\
+
+The \texttt{securityd} daemon determines which Keychain items each app can access. It uses access control lists to set policies for accessibility and authentication requirements.\\
+
+Keychain items can be shared between apps of the same developer.\\
+
+A class structure is used for protection:
 \begin{itemize}
-    \item The entire filesystem can be rendered useless by wiping the file system key
-    \item Modifying a passcode just rewraps the class key
-    \item Changing a file's class only requires rewrapping of the file key
-    \item If the device key is used, files or keychain items could only be restored using the same device
+	\item \texttt{kSecAttrAccessible} \textbf{When Unlocked.} Accessed when device unlocked.
+	\item \texttt{kSecAttrAccessible} \textbf{After First Unlock.} Protected unless passcode entered.
+	\item \texttt{kSecAttrAccessible} \textbf{Always.} Not protected and always accessible (default).
 \end{itemize}
 
-\subsubsection*{Key Chain Protection}
-\begin{itemize}
-    \item A secure container to store short but sensitive data: password, key, login token
-    \item Encrypted using 256-bit AES
-    \item \textit{securityd} daemon determines which Keychain items each app can access
-    \item Uses access control lists (ACLs) to set policies for accessibility and authentication requirements
-    \item Keychain items can be shared between apps of the same developer
-    \item A class structure is used for protection
-\end{itemize}
+For each of the above classes there is also a \textbf{This Device Only} variant which is non-migratory.
 
-\newpage
-\subsubsection*{Keychain Item Protection Classes}
-\begin{figure}[h]
-\centering
-\includegraphics[width=0.75\textwidth]{graphics/keychainitemprotectionclasses}
-\end{figure}
-
-\subsection{iOS Privacy}
+\subsection{iOS privacy}
 \begin{itemize}
     \item Only you can access your device
     \item Your personal data belongs to you

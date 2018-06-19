@@ -2,7 +2,7 @@
 \usepackage{blindtext}
 \usepackage{graphicx}
 \usepackage[utf8]{inputenc}
-\usepackage[margin=0.65in]{geometry}
+\usepackage[margin=0.9in]{geometry}
 \usepackage{multicol}
 \usepackage{wrapfig}
 \usepackage[dvipsnames]{xcolor}
@@ -292,10 +292,14 @@ An \textbf{explicit} intent sets the target component name, such as \texttt{com.
 
 An \textbf{implicit} intent provides information including action, data, and type. This is resolved at runtime by the package manager. The Android framework will find a suitable receiver for this intent. For example: \texttt{Action=intent.ACTION\_VIEW; Data=www.youtube.com} will open an app that can show YouTube, such as the YouTube app or the default web browser.
 
-\subsubsection*{Activity}
-\begin{wrapfigure}{r}{0.5\textwidth}
-\includegraphics[width=0.5\textwidth]{graphics/activity_lifecycle}
-\end{wrapfigure} 
+\subsubsection*{Activity} 
+
+\begin{figure}[h]
+\centering
+\caption{Android activity lifecycle}
+\includegraphics[width=0.65\textwidth]{graphics/activity_lifecycle}
+\end{figure}
+
 An \textbf{activity} is a main building block of GUI applications. It is like a website; multiple activities represent multiple ``pages'', and the main activity is like the homepage. It is possible to move from an activity to another, just like navigating through pages.\\
 
 There are system calls as state changes due to user actions. If there is another activity started, the on-going activity is paused. App process may be killed, and a stopped activity can be destroyed.\\
@@ -509,7 +513,7 @@ Permissions must be checked each time an operation that requires the permission 
 
 With Android, explanations for permissions can be added so that the user can know why a certain permission is required.\\
 
-When an app requests permissions, the system presents a dialog box to the user; the app cannot change the dialog box. When the user responds, the system invokes \texttt{onRequestPermissionsResult()}. The app must override that method to determine if the permission was granted.\\
+When an app requests permissions, the system presents a dialog box to the user; the app cannot change the dialog box. When the user responds, the system then invokes \texttt{onRequestPermissionsResult()}. The app must override that method to determine if the permission was granted.\\
 
 There are two ways for an app to perform a task: by asking the permission, or use an intent to get another app to perform the task. With permissions, the app has full control over the UX, but this adds complexity to the task. With the use of intents, the app that handles the intent provides the UI and thus the app has no control over the UX.
 
@@ -565,10 +569,10 @@ Cryptography is used throughout Android to ensure confidentiality and integrity.
 \subsubsection*{Device encryption}
 Process of encoding user data on an Android device with an encryption key. If device encryption enabled, all user-created data automatically encrypted before storing on disk. All reads automatically decrypt data before returning to calling process. Android disk encryption based on \texttt{dm-crypt}. Android uses AAES for device encryption\\
 
-Application security include: sandboxing, permissions, SELinux, app signing, Google Play reviews and Play Protect.\\
+Application security include: sandboxing, permissions, SELinux, app signing, Google Play reviews and Play Protect.
 
 \subsubsection*{Network security}
-Android provides secure communications over the Internet by supporting TLS/SSL. Their security team developed a tool called \texttt{nogotofail} which confirms if devices/apps are safe against known vulnerabilities/misconfigurations.\\
+Android provides secure communications over the Internet by supporting TLS/SSL. Their security team developed a tool called \texttt{nogotofail} which confirms if devices/apps are safe against known vulnerabilities/misconfigurations.
 
 \subsubsection*{BYOD}
 Android 5 and onwards support enterprise use cases.\\
@@ -679,7 +683,7 @@ Apple provides a \textbf{developer certificate} for app development and a \textb
 Certificate = public key(Message) + Apple's digital signature
 \end{shaded}
 
-\subsubsection{Provisioning Profiles}
+\subsubsection{Provisioning profiles}
 \paragraph{Provisioning profile} An XML property list (plist) required for an app that is being developed to be installed on a certain device. It configures the device to allow the execution of signed code. It is installed on the device only if the device ID is in the profile.\\
 
 The plist describes which app (App ID; random characters followed by company ID/name), which devices (each device has a 40-char hex unique device ID), developer certificate, and entitlements.\\
@@ -805,7 +809,7 @@ ROP to disable DEP exists, but is ineffective in iOS due to code signing. In iOS
 For ROP to succeed, the memory addresses of an app in execution need to be found (in executable code, heap, stack).
 
 
-\subsection{Address Space Layout Randomization (ASLR)}
+\subsection{Address space layout randomization (ASLR)}
 Code signing and DEP are not sufficient to withstand ROP. \textbf{ASLR} randomizes the memory location (base address) of key program components. It was originally designed to overcome return-to-libc attacks.\\
 
 ASLR works best if all code is compiled with the \textbf{position independent execution} (PIE) flag. Many third-party apps are not compiled for PIE.\\
@@ -947,13 +951,14 @@ Different class keys represent circumstances under which files should be accesse
 
 
 Keys for file and keychain data protection classes are colected and managed in \textbf{keybags}. iOS has four keybags:
+\begin{multicols}{2}
 \begin{itemize}
 	\item System keybag
 	\item Backup keybag
 	\item Escrow keybag
 	\item iCloud backup keybag
 \end{itemize}
-
+\end{multicols}
 The \textbf{UID} is an AES 256-bit hardware key unique to the device. It is in the secure enclave and cannot be accessed through software. This key encrypts a static string to produce the \textbf{hardware/device key}. This is not stored by Apple or its suppliers.
 
 \begin{figure}[h]
@@ -962,11 +967,6 @@ The \textbf{UID} is an AES 256-bit hardware key unique to the device. It is in t
 \includegraphics[width=0.9\textwidth]{graphics/keyhierarchy}
 \end{figure}
 
-\begin{figure}[h!]
-\centering
-\caption{Creating the File}
-\includegraphics[width=0.95\textwidth]{graphics/completeunlessopen}
-\end{figure}
 
 
 \subsubsection*{File system key}
@@ -985,8 +985,15 @@ Encrypted file system key again encrypted by effaceable key (in effaceable stora
 \includegraphics[width=0.75\textwidth]{graphics/keyhierarchy_2}
 \end{figure}
 
+\begin{figure}[h!]
+\centering
+\caption{Creating the File}
+\includegraphics[width=0.75\textwidth]{graphics/completeunlessopen}
+\end{figure}
+
+
 \subsubsection*{Why layered keys?}
-The entire filesystem can be rendered useless by wiping filesystem key. Modifying passcode just rewraps the class key. Changing a file's class only requires rewrapping file key. If device key is used, files or keychain items could only be restored using same device.\\
+The entire filesystem can be rendered useless by wiping filesystem key. Modifying passcode just rewraps the class key. Changing a file's class only requires rewrapping file key. If device key is used, files or keychain items could only be restored using same device.
 
 \subsubsection*{Keychain}
 A \textbf{keychain} is a secure container to store short but sensitive data: passwords, keys, login tokens, etc. It is encrypted using 256-bit AES.\\
@@ -1005,223 +1012,135 @@ A class structure is used for protection:
 For each of the above classes there is also a \textbf{This Device Only} variant which is non-migratory.
 
 \subsection{iOS privacy}
+\textbf{Differential privacy.} Scramble data and mix it with other users so that the general pattern can be known, rather than specifics.\\
+
+Identifiers are short-lived, random, and anonymous. Data collection involve buckets, sampling, and differential privacy.\\
+
+There are different types of identifiers:
 \begin{itemize}
-    \item Only you can access your device
-    \item Your personal data belongs to you
-    \begin{itemize}
-        \item Apple does not sell your data to third-parties (except they do)
-        \item Apple does not track what you shop (they probably do this as well)
-    \end{itemize}
-    \item Your experience improves while your data stays private
-    \item Differential privacy - scramble data and mix it with other users so that the general pattern can be known but not specifics
-    \item Apple does not want to know
-    \begin{itemize}
-        \item Which emoji you are using the most
-        \item Which new word you introduced
-    \end{itemize}
-    \item Apple wants to know
-    \begin{itemize}
-        \item The most used emoji
-        \item What new words are introduced
-    \end{itemize}
-    \item \textbf{Goal}: stronger privacy and rich user experience
+	\item \textbf{UUID.} Resets on system call. App scope.
+	\item \textbf{Vendor ID.} Same for apps from same team ID. Developer scope.
+	\item \textbf{Advertising ID.} Unique to all apps in device, can be reset. Device scope.
 \end{itemize}
 
-\subsubsection*{Some Privacy Measures}
-\begin{itemize}
-    \item Identifiers
-    \begin{itemize}
-        \item Short-lived
-        \item Random
-        \item Anonymous
-    \end{itemize}
-    \item Data collection
-    \begin{itemize}
-        \item Bucket
-        \item Sample
-        \item Differential privacy
-    \end{itemize}
-\end{itemize}
+In addition, MAC address randomization is used.
 
-\subsubsection*{Identifier API}
-\begin{figure}[h]
-\centering
-\includegraphics[width=0.75\textwidth]{graphics/identifierapi}
-\end{figure}
+\subsubsection{Differential privacy}
+A formal way of protecting individual privacy in a group by adding noise. The results from the database with or without an individual must not disclose privacy information of the individual.\\
 
-\subsubsection{Differential Privacy}
-\begin{itemize}
-    \item A formal way of protecting individual privacy in a group by \textbf{adding noise}
-    \item The results from the database with or without an individual must not disclose privacy information of the individual
-    \item Add statistically biased noise to data bit which averages out over a large number of data points
-    \item A randomized function F is $\epsilon$-differently private if for all data sets $D_{1}$ and $D_{2}$ differing at most by one element and all $S\subseteq Range(F)$
-\end{itemize}
+Add statistically biased noise to data bit which averages out over a large number of data points.
 
 \begin{shaded}
-$Pr[F(D_{1}\in S)] = e^{\epsilon} \times Pr[(F(D_{2} \in S)]$ where $e^{\epsilon} is 1 + \epsilon$
+A randomized function $F$ is $\epsilon$-differentially private if for all data sets $D_1$ and $D_2$ differing at most by one element, and all $S \subseteq \text{Range}(F)$.
+
+$$\Pr[(F(D_1) \in S)] = e^{\epsilon} \times \Pr[(F(D_2)\in S)]$$	
+
+where $e = 1 + \epsilon$.
 \end{shaded}
 
-\paragraph{How Much Noise to Add?}
-The probabilities of \textit{results with or without an individual} are almost the same. The noise should be a function of $\delta F$ and $\epsilon$
+The noise to add should be a function of $\delta F$ (maximum difference in result) and $\epsilon$. The probabilities of results \textit{with or without} an individual are almost the same. \\
 
-\subsubsection*{How to Generate Noise}
+Use a probability distribution to generate noise. The type of distribution depends on $F$:
 \begin{itemize}
-    \item Noise = Random value from the distribution with standard deviation large enough to fill the gap
-    \item Using probability distribution
-    \item Type of distribution depends on F
-    \item F is numeric - Laplace distribution
-    \begin{itemize}
-        \item $Lap(b) = \frac{1}{2b} exp (\frac{x}{b})$
-        \item $Variance = 2b^{2}$
-    \end{itemize}
-    \item F is categorical - Exponential distribution
+	\item $F$ is \textbf{numeric.} Laplace distribution
+	\item $F$ is \textbf{categorical.} Exponential distribution
 \end{itemize}
 
-\subsubsection*{How it Works}
-\begin{itemize}
-    \item Hash the value so that it becomes a fixed length (125 -$>$ Hash -$>$ 00010100111001)
-    \item Add noise by flipping some bits (000101001110001 -$>$ Add Noise - $>$ 010100001110000)
-    \item By averaging all the values you will end up with the original hash
-    \item The probability of changing 0 to 1 and 1 to 0 is less than the probability of unchanging 0 and 1
-\end{itemize}
 
-\subsection{Enterprise Security in iOS}
-\subsubsection*{Enterprise Concerns}
-\begin{itemize}
-    \item Enterprises have to manage devices that may be used to access or store the sensitive enterprise data
-    \item This introduces the new security risks e.g. Misplaced devices, lost devices, stolen devices
-    \item Basically, the sensitive enterprise data could be at risk
-\end{itemize}
-
-\subsubsection*{Enterprise Needs}
-\begin{itemize}
-    \item Control over devices in a number of ways
-    \begin{itemize}
-        \item Configuring devices (auto-lock)
-        \item Managing data and app restrictions (e.g. no access to camera)
-        \item Applying rules (strong passcode, remote wipe)
-    \end{itemize}
-    \item Users can do unsafe things, so enterprise security can help avoid the issues in the case of BYOD
-\end{itemize}
-
-\subsubsection*{Naive Approach}
-\begin{itemize}
-    \item IT admins can do configurations manually
-    \item Unfortunately, there are issues with manual configuration as it is \textit{labour-intensive} and \textit{error-prone}
-\end{itemize}
-
-\subsubsection{iOS Configuration Management}
-\begin{itemize}
-    \item iOS based devices are managed through the creation and installation of configuration profiles
-    \item These profiles contain settings configured by an administrator for installation on a user's device
-    \item Configuration profiles are centrally managed using
-    \begin{itemize}
-        \item Apple's iPhone Configuration Utility
-        \item Mobile Device Management (MDM) System
-    \end{itemize}
-\end{itemize}
-
-\subsubsection*{Configuration Profiles}
-\begin{itemize}
-    \item Used to ensure organisation security policy
-    \item An XML property list file (plist)
-    \item THe plist data may optionally be signed and encrypted
-\end{itemize}
-
-\subsubsection*{Profile Metadata}
-\begin{itemize}
-    \item The configuration profile metadata includes
-    \begin{itemize}
-        \item The human-readable name
-        \item Description of the profile
-        \item Creating organisation
-        \item Other fields
-    \end{itemize}
-    \item The configuration payloads are the most important portions of the profile
-\end{itemize}
+In iOS, noise is added to individual data inside the device, and the noisy data is sent to Apple. Again, the trick is to add statistically biased noise to data bit which averages out over a large number of data points.
 
 \begin{figure}[h]
 \centering
-\caption{Configuration Profile Payload Types}
-\includegraphics[width=0.75\textwidth]{graphics/configurationprofilepayloadtypes}
+\caption{Key Hierarchy}
+\includegraphics[width=0.75\textwidth]{graphics/diffpriv}
 \end{figure}
 
-\paragraph{Removal password} payload indicates the password needs to turn off the configuration profile. Configurations can also be set with 'Never Remove' - have to clear the device to get rid of it.
+\subsubsection*{How it works}
+\begin{itemize}
+	\item Hash the value so that it becomes a fixed length.
+	\item Add noise by flipping some bits.
+	\item By average all the values you will end up with the original hash.
+	\item The probability of changing 0 to 1 and 1 to 0 is less than the probability of not changing them.
+\end{itemize}
 
-\paragraph{Passcode policy} specifies how complex a passcode should be. If there is no existing passcode or if it is not complex enough, then the user is asked to set a new passcode.
+
+\subsection{Enterprise security in iOS}
+Enterprises have to manage devices that may be used to access or store sensitive enterprise data that could be put at risk. Devices could be misplaced, lost, or stolen.\\
+
+There is a need to control devices in a number of ways, such as requiring auto-lock, managing data/app restrictions (e.g. no camera access), and applying rules (passcode rules, remote wipe). In the case of BYOD, users can do unsafe things such as installing unauthorized third-party apps.
+
+\subsubsection*{Na\"{i}ve approach}
+Manual configurations by IT admins. This is labor-intensive and error-prone.
+
+\subsubsection*{iOS configuration management}
+iOS devices are managed through the creation and installation of configuration profiles, that contain settings configured by an administrator for installation on a user's device. This is managed using iPhone Configuration Utility and is a \textbf{mobile device management} (MDM) system.\\
+
+A configuration profile is used to set up organization's security policy. It is an XML plist that can be optionally signed and encrypted.\\
+
+The configuration profile metadata includes:
+\begin{multicols}{2}
+\begin{itemize}
+	\item human-readable name
+	\item description of the profile
+	\item creating organization
+	\item other fields
+\end{itemize}
+\end{multicols}
+
+The payloads are the most important part:
+\begin{itemize}
+	\item \textbf{Removal password.} Password to remove locked profiles from the device. This can be set to \textit{Never Remove} so the device has to be cleared to remove it.
+	\item \textbf{Passcode policy.} Defines whether passcode is required, and how complex it must be
+	\item \textbf{E-mail.} Configures user's email account
+	\item \textbf{Restrictions.} Restricts user from certain actions and apps
+	\item \textbf{Calendar subscription.} Subscribes user to a shared calendar
+	\item \textbf{VPN.} Specifies a VPN connection
+	\item \textbf{Wi-Fi.} Configures device to use specified network
+\end{itemize}
 
 \subsubsection*{iPhone Configuration Utility}
-\begin{itemize}
-    \item A graphical utility for iPhone configuration
-    \begin{itemize}
-        \item It lets administrators create and manage configuration profiles
-        \item Self-signed certificate created on the installing device at the first time of run
-    \end{itemize}
-    \item Installed onto iOS devices via USB connection
-    \begin{itemize}
-        \item Device specific certificates signed by the root certificate are automatically transferred to the iOS device for facilitating digital signature
-    \end{itemize}
-    \item Updated via USB, email or web server
-    \item Issue: not scalable - only manages a limited number of devices
-    \item Apple Configurator: More user friendly version of iPhone Configuration Utility
-\end{itemize}
+A GUI utility to allow admins to create and manage config profiles. A self-signed certificate is created on the installing device on first run. It is installed onto iOS devices via USB connections. The device specific certificates signed by the root certificate are transferred to the iOS device for facilitating digital signature.\\
 
-\begin{figure}[h]
+This can be updated by USB, email, or web-server. However, it is not scalable and only manages a limited number of devices.\\
+
+\textbf{Apple Configurator} is a more user-friendly version.
+
+\begin{table}[h]
 \centering
-\caption{Apple Configurator vs iPhone Configuration Utility}
-\includegraphics[width=0.75\textwidth]{graphics/appleconfigurator}
-\end{figure}
+\caption{Configuration utilities comparison}
+\begin{tabular}{|p{6cm}|l|l|}
+\hline
+ & \textbf{Apple Configuration} & \textbf{iPhone Configuration Utility} \\ \hline
+ Can run on Windows & \xmark & \checkmark \\ \hline
+ Can apply profiles and apps to multiple devices at once & \checkmark & \xmark \\ \hline
+ Can automatically update iOS and profiles & \checkmark & \xmark \\ \hline
+ Can backup devices & \checkmark & \xmark \\ \hline
+  
+\end{tabular}
+\end{table}
 
-\subsubsection{MDM Systems}
-\begin{itemize}
-    \item Used to manage a large number of devices
-    \item Apple offers an MDM system in Lion server through the Profile Manager service
-    \item The service works well for workgroups and SMEs
-    \item For large organisations, a commercial third party MDM solution would likely work best
-    \item 3 Components
-    \begin{enumerate}
-        \item iOS device
-        \item Organisation's MDM server
-        \item Apple's Push Notification Service (APNS)
-    \end{enumerate}
-\end{itemize}
+\subsubsection{MDM systems}
+MDM systems are used to manage a large number of devices. Apple offers an MDM system in Lion Server through the Profile Manager service. This works well for workgroups and small/medium-sized enterprises.\\
 
-\subsubsection*{How MDM Works}
-\begin{itemize}
-    \item Devices inform the APNS which topics they are subscribing to
-    \item The MD server tells the APNS to publish a notification
-    \item The notification is sent to the subscribed devices
-    \item The device then establishes a connection to the MDM server over HTTPS
-    \item A remote wipe command can be initiated by MDM, Exchange or iCloud
-\end{itemize}
+Larger organizations may find using a commercial third-party MDM solution to be better.\\
 
-\subsubsection*{Enterprise Apps}
-\begin{itemize}
-    \item An enterprise provisioning profile can be loaded along with the configuration profile
-    \item Then, the in-house enterprise apps can be distributed Over the Air (OTA) or through MDM
-    \item Enterprise provisioning profiles have to be renewed annually
-\end{itemize}
+Distributing via MDM requires three components: an iOS device, the organization's MDM server, and Apple Push Notification Service.\\
 
-\subsubsection*{Kill Switch \& Hardware Modifications}
-\begin{itemize}
-    \item The kill switch worries some companies, what if Apple wants to shut our apps down?
-    \item Some companies do not trust software restrictions - instead of relying on configuration profiles, companies can purchase special hardware
-\end{itemize}
+Devices inform the APNS which topics they are subscribing to. The MDM server tells the APNS to publish a notification which is sent to subscribed devices. The device then establishes a connection to the MDM server over HTTPS. A remote wipe command can be initiated by MDM, Exchange, or iCloud.\\
 
-\subsection{iOS Jailbreaking}
-\begin{itemize}
-    \item Removing certain security restrictions, put by Apple, on iOS devices by manipulating the software stack
-    \item Provides full access to the OS and filesystem
-    \item Using installers like Cydia, it enables installation of apps and themes not approved by Apple
-    \item Jailbreaking is legal in the United States - DMCA 2010 but can void the warranty
-    \item People jailbreak their iOS devices for many reasons
-    \begin{itemize}
-        \item Install third-party software not supported by Apple
-        \item An open platform for developing software
-        \item To bypass cellular carrier locks
-        \item To evaluate the security and discover vulnerabilities
-    \end{itemize}
-\end{itemize}
+Enterprise provisioning profiles can be loaded with the configuration profile as well, allowing in-house enterprise apps to be distributed (through MDM or OTA). These profiles have to be renewed annually.\\
+
+Kill switches are a concern for some companies. Some companies don't trust software restrictions so purchase special hardware.
+
+
+\subsection{iOS jailbreaking}
+\textbf{Jailbreaking} is removing certain security restrictions on iOS devices by manipulating the software stack. This allows full access to the OS and the filesystem. Installers such as Cydia allow the installation of apps not signed by Apple.\\
+
+Jailbreaking is legal in the US (DMCA 2010), but can void warranty.\\
+
+People jailbreak to install third-party software, to bypass carrier locks, and to evaluate security and discover vulnerabilities.\\
+
+The goal is to be able to run unsigned code and change the filesystem.\\
 
 \begin{figure}[h]
 \centering
@@ -1229,155 +1148,93 @@ The probabilities of \textit{results with or without an individual} are almost t
 \includegraphics[width=0.5\textwidth]{graphics/chainoftrust}
 \end{figure}
 
-\subsubsection*{How to Jailbreak}
+
+There are two main types of jailbreak persistences:
 \begin{itemize}
-    \item \textbf{Goal}: To be able to run unsigned code and change filesystem
-    \item Bypass kernel-level checks
-    \item \textbf{Attack using exploit}
-    \begin{itemize}
-        \item Buffer overflow
-        \item ROP
-        \item Disable DEP
-    \end{itemize}
-    \item \textbf{Kernel patch}
-    \begin{itemize}
-        \item Modifying file system
-        \item Disabling code signing
-        \item Changing behaviour of sandbox
-        \item Disabling MAC policies
-    \end{itemize}
+	\item \textbf{Tethered jailbreaks.} The jailbreak disappears upon device restart. (e.g. RedSn0w) The device has to be connected to a computer. The kernel is patched each time after reboot. Exploit against privileged code (USB device driver), exploit against unprivileged code and privilege escalation exploit. 
+	\item \textbf{Untethered jailbreaks.} Permanent. (e.g. Pandora by Alibaba for iPhone X) Harder to do as it needs to make changes to boot sequence. Used to be easy when there were bootrom vulnerabilities. Now requires multiple exploits: a tethered jailbreak to allow unsigned code to be executed, and then find ways to add exploits to the root filesystem; privileges need to be escalated to patch kernel
 \end{itemize}
 
-\subsubsection{Exploit Types}
+There are also semi-tethered and semi-untethered variants.
+
+\begin{multicols}{2}
+Attack using exploit:
 \begin{itemize}
-    \item The location of a vulnerability impacts the access level
-    \item Vary from the device hardware to its software
-    \item There are three levels of exploits
-    \begin{enumerate}
-        \item Bootrom level
-        \item iBoot level
-        \item Userland level
-    \end{enumerate}
+	\item Buffer overflow
+	\item ROP
+	\item Disable DEP
+	\item Load custom kernel
+	\item Modify running kernel
 \end{itemize}
 
-\subsubsection*{Bootrom Level}
+Kernel patch:
 \begin{itemize}
-    \item Vulnerabilities inside the hardware
-    \item The most powerful vulnerabilities from the point of view of a jailbreaker (allows jailbreakers to modify the whole bootchain)
-    \item Cannot be fixed by any software update
-    \item Can be fixed only within the next hardware revision
-    \item Famous exploits - SHAtter, Limera1n
+	\item Modify file system
+	\item Disable code signing
+	\item Change sandbox behavior
+	\item Disable MAC policies
 \end{itemize}
+\end{multicols}
 
-\paragraph{Limera1n}is a heap-based buffer overflow in the USB Data Firmware Upgrade (DFU) stack of the bootrom
-\begin{itemize}
-    \item Connect the machine to a computer via USB
-    \item Force into DFU mode
-    \item User the overflow to run the code that can patch the signature verification code
-    \begin{itemize}
-        \item Boot of a ramdisk
-        \item Run the patched version of the low-level bootloader and kernel
-        \item These patches allow execution of unsigned code
-    \end{itemize}
-    \item This is only a tethered jailbreak but it can be used to create an untethered one
-\end{itemize}
+The location of the vulnerability impacts the access level, which vary from hardware to software. There are three levels of exploits: Bootrom, iBoot, and userland.
 
-\subsubsection*{iBoot Level}
-\begin{itemize}
-    \item Vulnerabilities inside iBoot
-    \item As powerful as that of the bootrom in terms of features - still early in the boot process
-    \item Since iBoot is not baked into the hardware, they can be fixed by software upgrade
-    \item Famous exploit - iH8sn0w (A5 iBoot exploit)
-\end{itemize}
+\subsubsection*{Bootrom level}
+Vulnerabilities inside the hardware. From the point of view of a jailbreaker, these are the most powerful vulnerabilities as they enable jailbreakers to modify the whole bootchain.\\
 
-\subsubsection*{Userland Level}
-\begin{itemize}
-    \item Vulnerabilities in userland processes
-    \item Less powerful
-    \item Easier to fix
-    \item These processes can run with any permissions
-    \begin{itemize}
-        \item Root user - system processes
-        \item Mobile user - user applications
-    \end{itemize}
-    \item In both cases, at least two exploits required to jailbreak the device
-    \begin{enumerate}
-        \item Achieve arbitrary code execution
-        \item Escalate privileges
-    \end{enumerate}
-\end{itemize}
+These cannot be fixed by any software update, and only within the next hardware revision. Famous exploits are \textbf{SHAtter} and \textbf{Limera1n}. These affected all A4-based devices.
 
-\subsubsection{Kinds of Jailbreaks}
-\begin{itemize}
-    \item Depending on the vulnerabilities used, there are two kinds of jailbreaks with respect to jailbreak persistence
-    \begin{itemize}
-        \item Tethered jailbreaks: Disappears when the device is restarted (e.g. RedSn0w)
-        \item Untethered jailbreaks: Permanent (e.g. pandora)
-        \item Semi-tethered
-        \item Semi-untethered
-    \end{itemize}
-\end{itemize}
+\begin{shaded}
+	\textbf{Limera1n}\\
 
-\subsubsection*{Tethered Jailbreak}
-\begin{itemize}
-    \item The jailbreaks has to be enabled every time the device restarts
-    \item The device has to be connected to a computer via a USB cable
-    \item Kernel patched each time after reboot
-    \item Exploit against privileged code (USB device driver)
-    \item Exploit against unprivileged code + privilege escalation exploit
-\end{itemize}
+	Heap-based buffer overflow in the USB Data Firmware Upgrade (DFU) stack of the bootrom.
+	\begin{itemize}
+		\item Connect device via USB and force into DFU mode.
+		\item Use overflow to run code that can patch signature verification code. 
+		\item Boot of ramdisk, then run patched version of the low-level bootloader and kernel that allow execution of unsigned code)
+	\end{itemize}
+	This is a \textit{tethered} jailbreak but can be used to create an untethered one.
+\end{shaded}
 
-\subsubsection*{Untethered Jailbreak}
-\begin{itemize}
-    \item Permanent effect
-    \item Harder to do because it needs to make permanent changes to the boot sequence
-    \item Used to beasy when there was a vulnerability in the bootorm
-    \item Now requires multiple exploits
-    \begin{itemize}
-        \item Start with a tethered jailbreak - unsigned code needs to be executed
-        \item Find a way to install additional exploits on the root file system - privileges need to be escalated to patch the kernel
-    \end{itemize}
-\end{itemize}
+\subsubsection*{iBoot level}
+Vulnerabilities inside iBoot. This is as powerful as that of the bootrom in terms of features as it is still early in the boot process.\\
 
-\subsubsection{Jailbreakme 2.0 Star}
-\begin{itemize}
-    \item Userland exploit
-    \item Go to the website and ajilbreak your phone without attaching it to a computer or rebooting
-    \item Stack overflow when MobileSafari handled a particular font - the error was in the FreeType parser when rendering PDFs
-    \item This allowed the exploit to mount ROP within MobileSafari
-    \item This sophisticated payload proceeded to exploit another vulnerability to increase its level of access
-    \item The second vulnerability was an integer overflow in an IOSurface property
-    \begin{itemize}
-        \item IOSurface is a private framework to share graphics between processes
-        \item The second attack allowed code execution inside the kernel
-    \end{itemize}
-    \item From the kernel, disabled code signing
-    \item The ROP downloaded an unsigned library that jailbroke the device
-\end{itemize}
+iBoot is not baked into hardware so can be fixed by a software upgrade. iH8sn0w is an A5 iBoot exploit.
 
-\subsubsection{Jailbreaking can be Dangerous}
+\subsubsection*{Userland level}
+Vulnerabilities in userland processes. This is less powerful and is easier to fix. These processes can run with any permissions (root user - system processes, mobile users and user apps).\\
+
+Two exploits needed. First to achieve arbitrary code execution, and second to escalate privileges.
+
+\begin{shaded}
+	\textbf{Jailbreakme 2.0: Star}\\
+	
+	Userland exploit where you can go to a website to jailbreak without tethering or rebooting. This was a stack overflow attack when MobileSafari handled a particular font (FreeType parser when rendering PDFs).	 This allowed exploit to mount ROP within MobileSafari. \\
+	
+	The payload also exploited another vulnerability to increase level of access. This was an integer overflow in an \texttt{IOSurface} property, a private framework to share graphics between processes. This attack allowed code execution in the kernel.\\
+	
+	Code signing was disabled from the kernel. The ROP downloaded an unsigned library that jailbroke the device.
+\end{shaded}
+
+\subsubsection*{Dangers of jailbreaking}
+Jailbreaking disables security features:
+\begin{multicols}{2}
 \begin{itemize}
-    \item Disables almost all security features
-    \begin{itemize}
-        \item Code signing - unsigned code can run
-        \item Attack surface is increased
-        \item Shell and other utilities added
-        \item Can install root privileged code
-        \item Unsigned apps are not sandboxed
-    \end{itemize}
-    \item Jailbreaking essentially reduces iOS security and makes devices vulnerable to different worms
-    \item Example: Ikee worm
-    \begin{itemize}
-        \item Many jailbroken phones had an SSH Server installed
-        \item Did not change the default root password \textit{alpine}
-        \item SSH server was not sandboxed
-        \item What did the worm do?
-        \begin{itemize}
-            \item Originally changed the wallpaper
-            \item Later, it was used to lock the phone, steal contents and create botnets
-        \end{itemize}
-    \end{itemize}
+	\item Allows unsigned code to run
+	\item Increases attack surface
+	\item Adds shell and other utilities
+	\item Can install root privileged code
+	\item Unsigned apps are not sandboxed
 \end{itemize}
+\end{multicols}
+
+\begin{shaded}
+	\textbf{Ikee worm}\\
+	
+	Many jailbroken phones had an SSH server installed, and the root password (\texttt{alpine}) was not changed. The SSH server wasn't sandboxed.\\
+	
+	Originally the worm just changed the wallpaper, but was then used to lock the phone, steal data, and create botnets.
+\end{shaded}
+
 
 
 \newpage
